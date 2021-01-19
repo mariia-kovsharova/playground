@@ -53,7 +53,7 @@ const kevin = getBy<Student>(students, 'naem', 'Kevin'); // null
   
   Для этого воспользуемся функцией keyof - она возвращает КЛЮЧИ того типа, что указан
   конструкция <P extends keyof T> (в частности, extends) используется в таком виде, чтобы показать,
-  что множество P является надмножеством ключей T
+  что множество P является надмножеством ключей T.
 
   Затем третий параметр - его тип неизвестен, но зависит от свойства. Т.е. для объекта типа Student 
   если это свойство "age" - тип "value" должен быть числом, если это свойство "name" - тип "value" должен быть строкой.
@@ -99,6 +99,89 @@ Array.prototype.getBy = function <T, P extends keyof T>(
 ): T | null {
   return this.find((item: T) => item[prop] === value) || null;
 };
+
+type ObjectParameterType<T extends object, P extends keyof T> = T extends object ? T[P] : never;
+
+type shouldBeString = ObjectParameterType<{ foo: string }, 'foo'>; // string
+type shouldBeNumber = ObjectParameterType<{ foo: number }, 'foo'>; // number
+type shouldBeError = ObjectParameterType<{ foo: boolean }, 'asd'>; // <== ошибка, потому что проверяем по имеющимся ключам
+
+
+/*
+  Использование кортежей как типы аргументов функций
+*/
+type aOrB = 'a' | 'b';
+type tuple = [aOrB, number, string, Date];
+
+const tupleImpl: tuple = ['a', 1, 'asd', new Date()];
+
+type func = (...args: tuple) => void;
+
+const myFunc: func = (a: aOrB, b: number, c: string, d: Date) => {
+  return;
+}
+
+myFunc('a', 1, 'sad', new Date());
+
+function functionToCarry(a: string, b: boolean, c: 0 | 10 | 20): void  {
+  return;
+}
+
+type functionToCurryType = typeof functionToCarry; // (a: string, b: boolean, c: 0 | 10 | 20);
+
+/* Получение нового типа - парамтетры функции
+ По сути - это получение коретжа из типа функции (кортеж, содержащий параметры функции), НО БЕЗ ТИПА ВОЗВРАТА
+ Parameters - условный тип (см. ниже)
+*/
+type parameters = Parameters<typeof functionToCarry>; // [a: string, b: boolean, c: 0 | 10 | 20]
+
+/*
+  Для каррирования нужно создать условный тип, который будет получать
+  массив типов (наши параметры) и возвращать первый тип - это будет тип параметра, который принимает каррированная функция.
+
+  В тернарном операторе условного типа конструкцию T extends any[] можно рассматривать, как
+  T === any[] ? T[0] : never   <== если тип Т равен any[], вернем первый элемент, иначе вернем тип never
+*/
+
+type Head<T extends any[]> = T extends any[] ? T[0] : never;
+
+type headTest = Head<parameters>; // string <== первый параметр из кортежа, созданного из параметров функции
+
+/*
+  Затем нужно создать условный тип, который будет возвращать остаточные параметры - это то,
+  что будет возвращать каррированная функция
+
+  Что происходит ниже: создан условный тип, который проверяет, подходит ли текущий массив
+  под тип "первый элемент - любого типа, остальные элементы запишем в переменную типа ТТ с помощью infer"
+  Возвращаем в итоге тип ТТ, который будет являться остатком от типа T
+
+  в качестве параметра указываем функцию
+*/
+
+type Tail<T extends any[]> = 
+  ((...arg: T[]) => any) extends ((first: any, ...last: infer TT) => any)
+  ? TT
+  : never;
+
+
+type HasTail<T extends any[]> = T extends ([] | any[]) ? true : false;
+
+// Получение типа конкретного ключа в объекте
+type ObjectInfer<O> = O extends { foo: infer A } ? A : never;
+type TestObjectInfer = ObjectInfer<{ foo: 'asd' }>; // 'asd';
+
+// Получение типа параметров и возврата из функции
+type FunctionInfer<F> = 
+  F extends ((...arg: infer PARAMS) => infer RESULT)
+  ? [PARAMS, RESULT]
+  : never;
+
+type TestFunctionInfer = FunctionInfer<() => void>; // [[], void];
+
+// Получение типа массива
+type ArrayInfer<T> = T extends Array<infer TT> ? TT : never;
+
+type TestArrayInfer = ArrayInfer<string[]>; // string;
 
 /* 
   Пример перегрузки функции - в зависимости от типа входного параметра

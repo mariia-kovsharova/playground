@@ -264,6 +264,47 @@ type HasWings = CanFly<Pet>; // type HasWings = Bird
 type LivesUnderwater = CanSwim<Pet>; // type LivesUnderwater = Fish
 type LivesUnderground = CanDig<Pet>; // type = never
 
+/* Еще пример */
+
+type EmailAddresses = string | string[] | null;
+
+type NonNullType<T> = T extends null | undefined ? never : T;
+
+type NonNullEmailAddresses = NonNullType<EmailAddresses>;
+
+type User = {
+  name: string;
+  email: EmailAddresses;
+}
+
+// Функция возвращает либо адрес пользователя, либо дефолтное значение, если у пользователя стоит null
+// Конечно, можно прописать руками возврат string | string[] - но если Union-типов много, устанешь
+
+function getEmail(user: User): NonNullEmailAddresses {
+    if (user.email === null) {
+        return 'test@test.test';
+    }
+    return user.email;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* 
 Смоделируем ситуацию - у нас есть зоопарк, в котором живут разные животные.
 Когда мы хотим поселить новое животное, нам надо выбрать для него место согласно его типу (упрощенно):

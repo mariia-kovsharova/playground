@@ -2,8 +2,8 @@
 
 interface Tree<T> {
   value: T;
-  left: Tree<T>;
-  right: Tree<T>;
+  left: Tree<T> | null;
+  right: Tree<T> | null;
 
   add: (value: number) => void;
   traverse: () => number[];
@@ -11,8 +11,8 @@ interface Tree<T> {
 
 class TreeImpl implements Tree<number> {
   public value: number;
-  public left: Tree<number>;
-  public right: Tree<number>;
+  public left: Tree<number> | null;
+  public right: Tree<number> | null;
 
   constructor(value: number) {
     this.value = value;

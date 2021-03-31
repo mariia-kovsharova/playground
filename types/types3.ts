@@ -1,25 +1,4 @@
-// РАССМАТРИВАЕМ ТЕМЫ: структурная типизация, дженерики, advanced-дженерики, условные типы
-
-/*
-СТРУКТУРНАЯ ТИПИЗАЦИЯ.
-Основное сравнение идет по совпадению свойств и методов (JS), а не на родителя (Java)
-
-class Shape {
-  color: string;
-}
-
-class Circle {
-  color: string;
-  radius: number;
-}
-
-const shape: Shape = new Circle();  <== все ок, каждый круг имеет цвет, поэтому мы можем представить его как фигуру
-const circle: Circle = new Shape(); <== не ок, будет ошибка - не у всех фигур есть радиус
-
-Буквально можно представить, как "класс Circle содержит все свойства класса Shape и может быть еще какие-то".
-Или как "класс Circle - более точная (конкретная, узкая) версия класса Shape"
-Поэтому представление <Circle extends Shape> - валидно
-*/
+// РАССМАТРИВАЕМ ТЕМЫ:дженерики, advanced-дженерики, условные типы
 
 /*
 Дженерик - реализация парметрического полиморфизма в TS без явного указания типа как any
@@ -76,6 +55,8 @@ const somethingWrong = advancedGetBy(students, 'name', 11); // <=== ошибка
   у объекта нет.
   
   TS мержит все свойства встреченных интерфейсов
+
+  !Внимание - не работает с типами, объявленными явно (через type)
 */
 
 interface A {
@@ -93,7 +74,7 @@ interface Array<T> {
 }
 
 Array.prototype.getBy = function <T, P extends keyof T>(
-  this: T[],
+  this: T[],  // <=== типизируем this, что это массив элементов типа Т. не обязательно, если не затипизировать, this будет иметь тип any[]
   prop: P,
   value: T[P]
 ): T | null {
@@ -123,7 +104,7 @@ const myFunc: func = (a: aOrB, b: number, c: string, d: Date) => {
 
 myFunc('a', 1, 'sad', new Date());
 
-function functionToCarry(a: string, b: boolean, c: 0 | 10 | 20): void  {
+function functionToCarry(a: string, b: boolean, c: 0 | 10 | 20): void {
   return;
 }
 
@@ -158,7 +139,7 @@ type headTest = Head<parameters>; // string <== первый параметр и
   в качестве параметра указываем функцию
 */
 
-type Tail<T extends any[]> = 
+type Tail<T extends any[]> =
   ((...arg: T[]) => any) extends ((first: any, ...last: infer TT) => any)
   ? TT
   : never;
@@ -171,7 +152,7 @@ type ObjectInfer<O> = O extends { foo: infer A } ? A : never;
 type TestObjectInfer = ObjectInfer<{ foo: 'asd' }>; // 'asd';
 
 // Получение типа параметров и возврата из функции
-type FunctionInfer<F> = 
+type FunctionInfer<F> =
   F extends ((...arg: infer PARAMS) => infer RESULT)
   ? [PARAMS, RESULT]
   : never;
@@ -220,12 +201,6 @@ typeof transformedNull; // ===> null
 typeof transformedMayBeNull; // ===> string | null - в зависимости от РЕАЛЬНОГО типа параметра
 
 
-/*
-  УРОВНИ структурной типизации
-  ** any, unknown - "верхний уровень", к которому могут быть приведены ВСЕ типы. Можно рассмотреть, как объединение ВСЕХ возможных типов
-  ** never - "нижний уровень", максимально "узкий" тип, которому не соответствует НИ ОДИН тип
-*/
-
 interface Cat {
   makeSound: () => void;
   walk: () => void;
@@ -249,10 +224,10 @@ interface Fish {
 type Pet = Cat | Dog | Bird | Fish; // <=== тут может быть ЛЮБОЕ животное
 
 // УСЛОВНЫЕ ТИПЫ - по сути, враппер для получения конкретного подмножества типов
-type CanMakeSound<T> = T extends { makeSound:() => void } ? T : never; // <== из полученных типов T выделяем те типы, которые имеют метод makeSound, остальыне аналогично
-type CanWalk<T> = T extends { walk:() => void } ? T : never;
-type CanFly<T> = T extends { fly:() => void } ? T : never;
-type CanSwim<T> = T extends { swim:() => void } ? T : never;
+type CanMakeSound<T> = T extends { makeSound: () => void } ? T : never; // <== из полученных типов T выделяем те типы, которые имеют метод makeSound, остальыне аналогично
+type CanWalk<T> = T extends { walk: () => void } ? T : never;
+type CanFly<T> = T extends { fly: () => void } ? T : never;
+type CanSwim<T> = T extends { swim: () => void } ? T : never;
 type CanDig<T> = T extends { dig: () => void } ? T : never;
 
 // С помощью УСЛОВНОГО ТИПА выбираем из всех возможных Pet тех, которые СООТВЕТСТВУЮТ условию.
@@ -279,99 +254,13 @@ type User = {
 
 // Функция возвращает либо адрес пользователя, либо дефолтное значение, если у пользователя стоит null
 // Конечно, можно прописать руками возврат string | string[] - но если Union-типов много, устанешь
+// Полученный тип - своя реализация Util-типа NonNullable
 
 function getEmail(user: User): NonNullEmailAddresses {
-    if (user.email === null) {
-        return 'test@test.test';
-    }
-    return user.email;
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/* 
-Смоделируем ситуацию - у нас есть зоопарк, в котором живут разные животные.
-Когда мы хотим поселить новое животное, нам надо выбрать для него место согласно его типу (упрощенно):
- ** хищных - к хищным животным
- ** траводяных - к травоядным
- ** рыб - в аквариум
- ** птиц - в закрытый сверху вольер (чтобы не улетели)
-
-*/
-
-interface Lion {
-  type: 'animal',
-  eats: 'meat'
-}
-
-interface Bear {
-  type: 'animal',
-  eats: 'meat' 
-}
-
-interface Goat {
-  type: 'animal',
-  eats: 'veggies',
-}
-
-interface Coala {
-  type: 'animal',
-  eats: 'veggies',
-}
-
-interface GoldFish {
-  type: 'fish',
-}
-
-interface Tuna {
-  type: 'fish',
-}
-
-interface Parrot {
-  type: 'bird'
-}
-
-interface Raven {
-  type: 'bird'
-}
-
-type Animals = 
-  Lion | Bear | Goat | Coala |
-  GoldFish | Tuna | Parrot | Raven;
-
-// Выделение общего свойства "тип" у всех возможных типов - если у какого-то элемента нет свойства "тип", получим ошибку
-type AnimalType = Animals['type']; // type AnimalTypes = 'animal' | 'fish' | 'bird'
-
-type EatsMeat<T> = T extends { eats: 'meat' } ? T : never;
-type EatsVeggies<T> = T extends { eats: 'veggies' } ? T : never;
-
-type AnimalsEatMeat = EatsMeat<Animals>;
-type AnimalsEatVeggies = EatsVeggies<Animals>;
-
-class Zoo {
-  private places: Map<AnimalType, Animals[]> = new Map();
-
-  public addAnimal(animalType: AnimalType, extras?: any): void {
-
+  if (user.email === null) {
+    return 'test@test.test';
   }
-
-  public print(): string {
-    return '';
-  }
+  return user.email;
 }
+
+export { }

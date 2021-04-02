@@ -12,55 +12,96 @@ let counter = 1;
 type NonNull<T> = T extends null ? never : T;
 
 type FulfilledHandler<T> = (value?: T) => void;
-type ResolveType<T> = (value: T | undefined) => void;
+type RejectHandler<T> = (error?: T | Error) => void;
+
+type ResolveType<T> = (value?: T) => void;
+type RejectType<T> = (error?: T | Error) => void;
+
+const defaultHandler = <T>(x?: T | Error): T | Error | undefined => x;
 
 class CustomPromise<T> {
     id: number;
     PromiseState: STATES;
-    PromiseResult: T | undefined | null;
-    PromiseFulfillReactions: FulfilledHandler<T>[];
+    PromiseResult: T | undefined | null | Error;
 
-    constructor(executor: (resolve: ResolveType<T>) => void) {
+    PromiseFulfillReactions: FulfilledHandler<T>[];
+    PromiseRejectReactions: RejectHandler<T>[];
+
+    constructor(executor: (resolve: ResolveType<T>, reject: RejectType<T>) => void) {
         this.id = counter;
         counter += 1;
         console.log(`pending promise with id: ${this.id}`);
         this.PromiseState = STATES.pending;
         this.PromiseResult = null;
+
         this.PromiseFulfillReactions = [];
-        executor(this.resolve.bind(this));
+        this.PromiseRejectReactions = [];
+
+        executor(this.resolve.bind(this), this.reject.bind(this));
     }
 
-    resolve(value: T | undefined): void {
+    resolve(value?: T): void {
+        if (this.PromiseState !== STATES.pending) {
+            return;
+        }
+
         console.log(`resolving for promise with id ${this.id}`);
         this.PromiseState = STATES.resolved;
         this.PromiseResult = value;
 
-        // обходим все НЕЗАВИСИМЫЕ хэндлеры ТЕКУЩЕГО промиса, в каждый передаем полученный результат
-        this.PromiseFulfillReactions.forEach((thenHandler) => thenHandler(this.PromiseResult!));
+        // обходим все НЕЗАВИСИМЫЕ успешные хэндлеры ТЕКУЩЕГО промиса, в каждый передаем полученный результат
+        this.PromiseFulfillReactions.forEach((nextThen) => nextThen(this.PromiseResult as NonNull<T>));
     }
 
-    then(onFulfill: FulfilledHandler<T>): CustomPromise<T> {
-        // вернуть новый промис, в котором поставить условие на проверку статуса текущего
-        const promise = new CustomPromise<T>((newPromiseResolve: ResolveType<any>) => {
-            if (this.PromiseState === STATES.resolved) {
-                // если промис уже зарезолвен, тогда НОВЫЙ промис просто РЕЗОЛВИМ с текущим готовым результатом
-                // можно вызвать onFullfillHandler с текущим результатом, но так просто понятней
-                // и все это на следующий тик
-                setTimeout(() => newPromiseResolve(onFulfill(this.PromiseResult as NonNull<T>)));
-            }
+    reject(error?: T | Error): void {
+        if (this.PromiseState !== STATES.pending) {
+            return;
+        }
 
-            // если промис не зарезолвлен, тогда надо в текущие обработчики добавить еще один.
+        console.log(`rejection for promise with id ${this.id}`);
+        this.PromiseState = STATES.rejected;
+        this.PromiseResult = error;
+
+        // обходим все НЕЗАВИСИМЫЕ неуспешные хэндлеры ТЕКУЩЕГО промиса, в каждый передаем полученную ошибку
+        this.PromiseRejectReactions.forEach((nextReject) => nextReject(this.PromiseResult as NonNull<T>));
+    }
+
+    then(onFulfill: FulfilledHandler<T> = defaultHandler, onReject: RejectHandler<T> = defaultHandler): CustomPromise<T> {
+        // вернуть новый промис, в котором поставить условие на проверку статуса текущего
+        return new CustomPromise<T>((newPromiseResolve: ResolveType<any>) => {
+            // если промис не зарезолвлен, тогда надо в текущие успешные обработчики добавить еще один.
             // когда результат будет получен, ОБОСОБЛЕННЫЙ (НЕЗАВИСИМЫЙ) хэндлер получит этот результат
             const onFullfillHandler = (result: T | undefined): void => {
                 const fulfilledResult = onFulfill(result);
                 newPromiseResolve(fulfilledResult);
             }
 
-            // в ТЕКУЩИЙ промис добавляем новый НЕЗАВИСИМЫЙ хэндлер
-            this.PromiseFulfillReactions.push(onFullfillHandler);
-        });
+            // если промис не зарезолвлен, тогда надо в текущие неуспешные обработчики добавить еще один.
+            // когда результат будет получен, ОБОСОБЛЕННЫЙ (НЕЗАВИСИМЫЙ) хэндлер получит этот результат
+            const onRejectHander = (result: T | undefined | Error): void => {
+                const rejectedResult = onReject(result);
+                newPromiseResolve(rejectedResult);
+            }
 
-        return promise;
+            if (this.PromiseState === STATES.resolved) {
+                // если промис уже зарезолвен, тогда НОВЫЙ промис просто РЕЗОЛВИМ с текущим готовым результатом
+                // можно вызвать onFullfillHandler с текущим результатом, но так просто понятней
+                // и все это на следующий тик
+                setTimeout(() => newPromiseResolve(onFulfill(this.PromiseResult as NonNull<T>)), 0);
+            }
+
+            if (this.PromiseState === STATES.rejected) {
+                // если промис уже зареджектен, тогда новый промис РЕЗОЛВИТСЯ с текущим результатом (ошибкой)
+                // пропущенным через обработчик ошибки (onRejectedHandler). ошибка считается ОБРАБОТАННОЙ
+                // и все это на следующий тик
+                setTimeout(() => newPromiseResolve(onReject(this.PromiseResult as NonNull<T>)), 0);
+            }
+
+            // в ТЕКУЩИЙ промис добавляем новый НЕЗАВИСИМЫЙ успешный хэндлер
+            this.PromiseFulfillReactions.push(onFullfillHandler);
+            // в ТЕКУЩИЙ промис добавляем новый НЕЗАВИСИМЫЙ неуспешный хэндлер
+            this.PromiseRejectReactions.push(onRejectHander);
+        });
     }
 }
 
@@ -119,4 +160,26 @@ const test = async () => {
     console.log(messages2);
 };
 
+const rejectTest = async () => {
+    const resolveMessage = 'Resolved';
+    const rejectMessage = 'Ooops!';
+
+    const rejectedPromise = new CustomPromise<string>((resolve, reject) => {
+        reject(rejectMessage);
+        resolve(resolveMessage);
+    });
+
+    await rejectedPromise.then(
+        (value?: string) => {
+            console.log('I should have never been called');
+        },
+        (err: any) => {
+            console.error(err);
+        });
+
+
+};
+
+
 test();
+rejectTest();

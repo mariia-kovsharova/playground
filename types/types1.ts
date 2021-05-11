@@ -12,15 +12,15 @@ import { request, RequestOptions } from 'node:http';
 
 type typeA = {
     a: string;
-}
+};
 
 type typeB = {
     b: number;
-}
+};
 
 type typeC = {
     c: boolean;
-}
+};
 
 type typeD = typeA & typeB & typeC;
 /* 
@@ -34,8 +34,8 @@ typeD = {
 const d: typeD = {
     a: 'foo',
     b: 1,
-    c: true
-}
+    c: true,
+};
 
 /**
  * ТИП ОБЪЕДИНЕНИЯ
@@ -44,22 +44,22 @@ const d: typeD = {
 
 type A = {
     a: string;
-}
+};
 
 type B = {
     b: number;
-}
+};
 
 type C = {
     c: boolean;
-}
+};
 
 type D = A | B | C;
 
 const dd: D = {
     a: 'ads',
-    b: 1
-}
+    b: 1,
+};
 
 /*
 СТРУКТУРНАЯ ТИПИЗАЦИЯ.
@@ -84,10 +84,9 @@ const circle: Circle = new Shape(); <== не ок, будет ошибка - н�
 Если у первого и второго типа одинаковый набор полей, то это два одинаковых типа. 
 */
 
-
-type InitialTask = { id: number, whoCreated: number }
-type InWorkTask = { id: number, whoCreated: number }
-type FinishedTask = { id: number, whoCreated: number, finishDate: Date }
+type InitialTask = { id: number; whoCreated: number };
+type InWorkTask = { id: number; whoCreated: number };
+type FinishedTask = { id: number; whoCreated: number; finishDate: Date };
 
 type Task = InitialTask | InWorkTask | FinishedTask;
 
@@ -98,13 +97,12 @@ function logTask(task: InitialTask): void {
 const initialTask: InitialTask = {
     id: 1,
     whoCreated: 2,
-}
+};
 
 const inWorkTask: InWorkTask = {
     id: 2,
     whoCreated: 2,
-}
-
+};
 
 logTask(initialTask);
 logTask(inWorkTask);
@@ -112,9 +110,14 @@ logTask(inWorkTask);
 // Формально тут InitialTask и InWorkTask - одинаковые типы. Чтобы их различить, необходимо добавить какой-то дискриминатор, чтобы TS не считал их одним типом.
 // Дискриминатором может служить строковый или числовой литерал
 
-type InitialTaskUnique = { type: 'INITIAL', id: number, whoCreated: number }
-type InWorkTaskUnique = { type: 'IN_WORK', id: number, whoCreated: number }
-type FinishedTaskUnique = { type: 'FINISHED', id: number, whoCreated: number, finishDate: Date }
+type InitialTaskUnique = { type: 'INITIAL'; id: number; whoCreated: number };
+type InWorkTaskUnique = { type: 'IN_WORK'; id: number; whoCreated: number };
+type FinishedTaskUnique = {
+    type: 'FINISHED';
+    id: number;
+    whoCreated: number;
+    finishDate: Date;
+};
 
 type TaskTypes = InitialTaskUnique | InWorkTaskUnique | FinishedTaskUnique;
 
@@ -126,19 +129,18 @@ const initialTaskU: InitialTaskUnique = {
     type: 'INITIAL',
     id: 1,
     whoCreated: 2,
-}
+};
 
 const inWorkTaskU: InWorkTaskUnique = {
     type: 'IN_WORK',
     id: 2,
     whoCreated: 2,
-}
-
+};
 
 logUniqueTask(initialTaskU);
 logUniqueTask(inWorkTaskU); // <=== ошибка, типы разные теперь
 
-type TaskType = TaskTypes["type"]; // <=== можно вытащить непосредственный дискриминатор type TaskType = "INITIAL" | "IN_WORK" | "FINISHED"
+type TaskType = TaskTypes['type']; // <=== можно вытащить непосредственный дискриминатор type TaskType = "INITIAL" | "IN_WORK" | "FINISHED"
 
 /*
   УРОВНИ структурной типизации
@@ -154,7 +156,8 @@ type TaskType = TaskTypes["type"]; // <=== можно вытащить непо�
 
 // Exhaustive checking - это возможность проверить, что мы обработали все возможные кейсы.
 
-function checkTask(t: TaskTypes): TaskType | never { // <=== таска с типом "FINISHED" не обработана, ошибка тоже не кидается, компилятор ругается
+function checkTask(t: TaskTypes): TaskType | never {
+    // <=== таска с типом "FINISHED" не обработана, ошибка тоже не кидается, компилятор ругается
     switch (t.type) {
         case 'INITIAL':
             return 'INITIAL';
@@ -163,6 +166,21 @@ function checkTask(t: TaskTypes): TaskType | never { // <=== таска с ти�
     }
 }
 
+// Если возврата нет, exhaustive checking можно сделать немного по-другому:
+
+function checkTaskWithoutReturn(t: TaskTypes): void {
+    switch (t.type) {
+        case 'INITIAL':
+            // do something without return
+            break;
+        case 'IN_WORK':
+            // do something without return
+            break;
+        default:
+            const exhaustiveCheck: never = t.type; // <=== ошибка, не обработали значение 'FINISHED'
+            throw new Error('Ooops, this has not been expected!');
+    }
+}
 
 /**
  * НОМИНАЛЬНАЯ СИСТЕМА ТИПОВ
@@ -173,13 +191,13 @@ function fetchData(url: string, token: string): Promise<void> {
     // Просто пример
     const options = {
         url,
-        data: token
+        data: token,
     } as unknown as RequestOptions;
 
     return new Promise((resolve, reject) => {
         request(options, () => {
             resolve();
-        })
+        });
     });
 }
 
@@ -187,23 +205,23 @@ fetchData('token', 'url'); // <=== ошибки компилятора нет, �
 
 // Для избегания этого в качестве параметорв функции должны быть указаны брендированные типы
 
-type Brand<T, B extends string> = T & { readonly _brand: B }
+type Brand<T, B extends string> = T & { readonly _brand: B };
 
-type Url = Brand<string, "url">
+type Url = Brand<string, 'url'>;
 
-type Token = Brand<string, "token">
+type Token = Brand<string, 'token'>;
 
 function fetchDataBrand(url: Url, token: Token): Promise<void> {
     // Просто пример
     const options = {
         url,
-        data: token
+        data: token,
     } as unknown as RequestOptions;
 
     return new Promise((resolve, reject) => {
         request(options, () => {
             resolve();
-        })
+        });
     });
 }
 
@@ -216,4 +234,4 @@ fetchDataBrand(url, token);
 // Теперь всё хорошо — получили брендированные примитивы. Брендирование полезно, когда встречается несколько аргументов (строки, числа).
 // У них есть определенная семантика (x,y координаты), и их нельзя путать. Удобно, когда компилятор подсказывает, что они перепутаны.
 
-export { }
+export {};

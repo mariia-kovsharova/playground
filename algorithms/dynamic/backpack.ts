@@ -34,16 +34,10 @@ const calculcateMaxValue = (backpackSize: number, items: ReadonlyArray<Item>): n
             console.log(`try to put the ${item.name} to backpack with size ${currentBackpackEmptySpace}`);
 
             if (item.weigth > currentBackpackEmptySpace) {
-                // предмет не вмещается, он слишком тяжелый, поэтому в таблицу берется значение
-                // для предыдущего предмета или null, если предыдущего предмета нет
+                // предмет не вмещается, он слишком тяжелый
                 console.log(`can not do it! the ${item.name} is too heavy`);
-
-                if (i > 0) {
-                    table[i][j] = table[i - 1][j];
-                } else {
-                    table[i][j] = null;
-                }
-
+                // в таблицу берется значение макс ценности предыдущего предмета или null, если предыдущего предмета нет
+                table[i][j] = i > 0 ? table[i - 1][j] : null;
                 continue;
             }
 

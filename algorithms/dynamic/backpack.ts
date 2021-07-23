@@ -2,13 +2,11 @@
  * Алгоритм поиска оптимального решения
  */
 
-class Item {
-    constructor(public name: string, public weigth: number, public price: number) {}
-}
+import assert from 'assert';
 
-const guitar = new Item('guitar', 1, 1500);
-const radio = new Item('radio', 4, 3000);
-const notebook = new Item('notebook', 3, 2000);
+class Item {
+    constructor(public name: string, public weigth: number, public price: number) { }
+}
 
 /**
  *
@@ -19,63 +17,81 @@ const notebook = new Item('notebook', 3, 2000);
 const calculcateMaxValue = (backpackSize: number, items: ReadonlyArray<Item>): number => {
     // таблица, в которой каждая строка служит для подсчета максимальной ценности для текущего элемента
     const table = Array(items.length);
-    let maxValue = 0;
+    // totalMaxValue - глобальный максимум в рюкзаке
+    let totalMaxValue = 0;
 
     for (let i = 0; i < items.length; i += 1) {
+        const item = items[i];
         // для каждого элемента создаем "подрюкзак"
         table[i] = Array(backpackSize);
 
         // вычисление значений для "подрюкзаков" меньшего размера
         for (let j = 0; j < backpackSize; j += 1) {
             let currentBackpackEmptySpace = j + 1;
-
-            const item = items[i];
-
             console.log(`try to put the ${item.name} to backpack with size ${currentBackpackEmptySpace}`);
 
             if (item.weigth > currentBackpackEmptySpace) {
                 // предмет не вмещается, он слишком тяжелый
                 console.log(`can not do it! the ${item.name} is too heavy`);
-                // в таблицу берется значение макс ценности предыдущего предмета или null, если предыдущего предмета нет
-                table[i][j] = i > 0 ? table[i - 1][j] : null;
+                // текущая ценность - значение ценности предыдущего предмета или 0, если предыдущего предмета нет
+                const currentValue = i > 0 ? table[i - 1][j] : 0;
+                table[i][j] = currentValue;
                 continue;
             }
 
-            table[i][j] = item.price;
             currentBackpackEmptySpace -= item.weigth;
 
-            if (currentBackpackEmptySpace === 0) {
-                // если места больше нет, наибольшую текущую ценность составляет текущий элемент в рюкзаке
+            if (!currentBackpackEmptySpace) {
                 console.log('the backpack is full');
-                // если текущая ценность больше максимальной, она становится максимальной
-                if (maxValue < table[i][j]) {
-                    maxValue = table[i][j];
+                // если места больше нет, наибольшую текущую ценность составляет максимум между стоимостью
+                // текущего предмета и стоимостью предыдущего предмета в том же "подрюкзаке";
+                const currentItemValue = item.price;
+                const previousItemValue = i > 0 ? table[i - 1][j] : 0;
+
+                table[i][j] = Math.max(currentItemValue, previousItemValue);
+                // если текущая ценность больше общей максимальной, она становится максимальной
+                if (totalMaxValue < table[i][j]) {
+                    totalMaxValue = table[i][j];
                 }
             } else {
-                if (i > 0) {
-                    const currentItemMaxValue = table[i][j];
-                    const previousItemMaxValue = table[i - 1][currentBackpackEmptySpace - 1];
-                    // текущая ценность складываеся из суммы ценности текущего элемента и суммы ценности
-                    // элемента, который влезает в оставшееся место
-                    const summaryValue = currentItemMaxValue + previousItemMaxValue;
-                    table[i][j] = summaryValue;
+                const currentItemValue = item.price;
+                const restSpaceIndex = currentBackpackEmptySpace - 1;
+                const previousItemAdditionalValue = i > 0 ? table[i - 1][restSpaceIndex] : 0;
 
-                    // если текущая ценность больше максимальной, она становится максимальной
-                    if (maxValue < summaryValue) {
-                        maxValue = summaryValue;
-                    }
-                } else {
-                    console.log(
-                        `the backpack value is ${table[i][j]}, the empty space is ${currentBackpackEmptySpace}, but other items are too heavy`
-                    );
+                // сумма стоимости текущего предмета плюс предыдущего предмета, который влезает
+                // в оставшееся место
+                const summaryCurrentMaxValue = currentItemValue + previousItemAdditionalValue;
+
+                const previousItemValue = i > 0 ? table[i - 1][j] : 0;
+
+                table[i][j] = Math.max(summaryCurrentMaxValue, previousItemValue);
+
+                if (totalMaxValue < table[i][j]) {
+                    totalMaxValue = table[i][j];
                 }
             }
         }
     }
-    return maxValue;
+    return totalMaxValue;
 };
 
-const result = calculcateMaxValue(4, [guitar, radio, notebook]);
-console.log(`the max value is ${result}`);
+const guitar = new Item('guitar', 1, 1500);
+const radio = new Item('radio', 4, 3000);
+const notebook = new Item('notebook', 3, 2000);
 
-export {};
+const result1 = calculcateMaxValue(4, [guitar, radio, notebook]);
+
+console.log(result1);
+
+assert(result1 === 3500);
+
+const water = new Item('water', 3, 10);
+const book = new Item('book', 1, 3);
+const food = new Item('food', 2, 9);
+const jaket = new Item('jacket', 2, 5);
+const camera = new Item('camera', 1, 6);
+
+const result2 = calculcateMaxValue(6, [water, book, food, jaket, camera]);
+assert(result2 === 25);
+
+export { };

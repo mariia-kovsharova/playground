@@ -1,3 +1,6 @@
+import assert from 'assert';
+import { isEqual } from 'lodash';
+
 /**
  * O(n^2)
  * @param array массив элементов для сортировки
@@ -23,7 +26,12 @@ const bubble = <T>(array: Array<T>): Array<T> => {
 const arr1 = [20, 12, 3, 53, 13, 1, 14, 8, 2, 19];
 const arr2 = ['test', 'cat', 'do', 'abc', 'a', 'dod', 'ab', 'tst'];
 
-console.log(bubble(arr1));
-console.log(bubble(arr2));
+const sortedArr1 = [1, 2, 3, 8, 12, 13, 14, 19, 20, 53];
+const sortedArr2 = ['a', 'ab', 'abc', 'cat', 'do', 'dod', 'test', 'tst'];
 
-export {};
+assert(isEqual(bubble(arr1), sortedArr1));
+assert(isEqual(bubble(arr2), sortedArr2));
+
+console.log('done');
+
+export { };

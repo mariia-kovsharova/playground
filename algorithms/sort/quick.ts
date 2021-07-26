@@ -7,7 +7,7 @@ import { isEqual } from 'lodash';
  */
 const quick = <T>(array: Array<T>): Array<T> => {
     // базовый случай - когда массив имеет длину 0 или 1, он отсортирован
-    if (array.length === 0 || array.length === 1) {
+    if (array.length <= 1) {
         return array;
     }
 

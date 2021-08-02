@@ -51,6 +51,8 @@ const findLongestSequance = (firstWord: string, secondWord: string): number => {
         }
     }
 
+    // На самом деле, можно просто вернуть крайний правый нижний элемент из таблицы
+    // но так проще для понимания
     return totalCountsOfTheSameChars;
 };
 

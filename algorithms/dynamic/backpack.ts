@@ -73,6 +73,9 @@ const calculcateMaxValue = (backpackSize: number, items: ReadonlyArray<Item>): n
             }
         }
     }
+
+    // На самом деле, можно просто вернуть крайний правый нижний элемент из таблицы
+    // но так проще для понимания
     return totalMaxValue;
 };
 

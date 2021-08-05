@@ -1,6 +1,7 @@
 /**
  * Алгоритм поиска оптимального решения
- * для нахождения максимальной общей подстроки для двух словы
+ * для нахождения максимальной общей подстроки для двух слов:
+ * количество символов, одинаковых для обеих строк в той же позиции
  * 
  *      f i s h
  *          | |
@@ -18,21 +19,45 @@ import assert from 'assert';
 const findLongestSubstring = (firstWord: string, secondWord: string): number => {
     // таблица, в которой каждая строка служит определением, какова длина максимальной последовательности
     // для текущей буквы
-    const table = Array(firstWord.length);
-    // totalMaxSubstring - максимальная последовательность
+    const n = firstWord.length;
+    const m = secondWord.length;
+
     let totalMaxSubstring = 0;
 
-    for (let i = 0; i < table.length; i += 1) {
-        table[i] = Array(secondWord.length);
+    /**
+    * Базовые случаи:
+    * 
+    * 1) Если строка А и строка B имеют длину 0, общая подстрока = 0
+    * 2) Если строка А имеет длину i, а строка В имеет длину 0, общая подстрока = 0
+    * 3) Если строка А имеет длину 0, а строка В имеет длину j, общая подстрока = 0
+    * 
+    */
 
-        for (let j = 0; j < secondWord.length; j += 1) {
-            const firstWordChar = firstWord[j];
-            const secondWordChar = secondWord[j];
+    const table = Array(n + 1);
 
+    // Реализация базового случая 3 (и 1)
+    table[0] = Array(m + 1).fill(0);
+
+    for (let i = 1; i <= n; i += 1) {
+        table[i] = Array(m + 1);
+        // Реализация базового случая 2
+        table[i][0] = 0;
+
+        for (let j = 1; j <= m; j += 1) {
+            const realIndex = j - 1;
+
+            const firstWordChar = firstWord[realIndex];
+            const secondWordChar = secondWord[realIndex];
+
+            // Если символы не равны друг другу, значит, никакой
+            // общей подстроки нет
             if (firstWordChar !== secondWordChar) {
                 table[i][j] = 0;
             } else {
-                const value = i > 0 ? table[i - 1][j - 1] + 1 : 1;
+                // Если символы равны друг другу, то наибольшая подстрока равна
+                // текущему символу (длиной 1) плюс предыдущая общая подстрока,
+                // но на символ короче (может быть, может не быть)
+                const value = table[i - 1][j - 1] + 1;
                 table[i][j] = value;
 
                 if (totalMaxSubstring < value) {

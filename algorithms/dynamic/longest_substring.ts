@@ -1,11 +1,15 @@
 /**
  * Алгоритм поиска оптимального решения
  * для нахождения максимальной общей подстроки для двух слов:
- * количество символов, одинаковых для обеих строк в той же позиции
+ * количество символов, идущих подряд, одинаковых для обеих строк
  * 
  *      f i s h
  *          | |
  *      f o s h
+ * 
+ *      S U B S E Q U E N C E
+ *      | | |       / / / /
+ *      S U B E    U E N C S
  */
 
 import assert from 'assert';
@@ -44,10 +48,11 @@ const findLongestSubstring = (firstWord: string, secondWord: string): number => 
         table[i][0] = 0;
 
         for (let j = 1; j <= m; j += 1) {
-            const realIndex = j - 1;
+            const realI = i - 1;
+            const realJ = j - 1;
 
-            const firstWordChar = firstWord[realIndex];
-            const secondWordChar = secondWord[realIndex];
+            const firstWordChar = firstWord[realI];
+            const secondWordChar = secondWord[realJ];
 
             // Если символы не равны друг другу, значит, никакой
             // общей подстроки нет
@@ -56,8 +61,8 @@ const findLongestSubstring = (firstWord: string, secondWord: string): number => 
             } else {
                 // Если символы равны друг другу, то наибольшая подстрока равна
                 // текущему символу (длиной 1) плюс предыдущая общая подстрока,
-                // но на символ короче (может быть, может не быть)
-                const value = table[i - 1][j - 1] + 1;
+                // но на символ короче (которая может быть, может не быть)
+                const value = 1 + table[i - 1][j - 1];
                 table[i][j] = value;
 
                 if (totalMaxSubstring < value) {
@@ -75,12 +80,14 @@ const result2 = findLongestSubstring('fish', 'vista');
 const result3 = findLongestSubstring('blue', 'clues');
 const result4 = findLongestSubstring('test', 'fish');
 const result5 = findLongestSubstring('test', 'bullet');
+const result6 = findLongestSubstring('SUBSEQUENCE', 'SUBEUENCS');
 
 assert(result1 === 2);
 assert(result2 === 2);
 assert(result3 === 3);
 assert(result4 === 1);
 assert(result5 === 0);
+assert(result6 === 4);
 
 console.log('done');
 

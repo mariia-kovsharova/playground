@@ -1,8 +1,7 @@
 /**
  * Алгоритм поиска оптимального решения
  * для нахождения наибольшей общей подпоследовательности (НОП) для двух слов:
- * количество букв в последовательности, общих для двух строк (слов) - те же буквы в той же позиции
- * в обоих словах
+ * количество символов в последовательности, идущих в одном порядке, общих для двух строк (слов)
  * 
  *      f i s h
  *      |   | |
@@ -45,10 +44,11 @@ const findLongestSequance = (firstWord: string, secondWord: string): number => {
 
             // Индекс будет на 1 меньше, т.к. в первой строке и столбце матрицы - базовый случай         
 
-            const realIndex = j - 1;
+            const realI = i - 1;
+            const realJ = j - 1;
 
-            const firstWordChar = firstWord[realIndex];
-            const secondWordChar = secondWord[realIndex];
+            const firstWordChar = firstWord[realI];
+            const secondWordChar = secondWord[realJ];
 
             if (firstWordChar == secondWordChar) {
                 // Если символы равны, максимальная длина подпоследовательности
@@ -87,8 +87,8 @@ const result5 = findLongestSequance('test', 'bullet');
 assert(result1 === 3);
 assert(result2 === 2);
 assert(result3 === 1);
-assert(result4 === 2);
-assert(result5 === 0);
+assert(result4 === 3);
+assert(result5 === 2);
 
 console.log('done');
 

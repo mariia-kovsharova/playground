@@ -18,6 +18,8 @@ const BRACES_OPERATIONS: Array<string> = ['(', ')'];
 const HIGH_ORDER_OPERATIONS: Array<string> = ['*', '/', '%', '^'];
 const LOW_ORDER_OPERATIONS: Array<string> = ['+', '-'];
 
+const SEPARATOR = ':';
+
 const OPERATIONS: Array<string> = HIGH_ORDER_OPERATIONS.concat(LOW_ORDER_OPERATIONS);
 
 const OPERATIONS_MAPPER = <OperationMapping>{
@@ -74,8 +76,7 @@ const areOperationsTheSamePriority = (a: string, b: string): boolean =>
  * 2 + 3 * 4  => 2 3 4 * +
  */
 const format = (sequence: string): string => {
-    const matches = sequence.match(/(\d+)|([\(\)\/\*\+\-\^\%])/g);
-    const seq = matches ?? [];
+    const seq = sequence.match(/(\d+)|([\(\)\/\*\+\-\^\%])/g) ?? [];
 
     const result = <Array<string | Operation>>[];
     const operations = new Stack<Operation>();
@@ -131,7 +132,7 @@ const format = (sequence: string): string => {
         result.push(item);
     }
 
-    return result.join('');
+    return result.join(SEPARATOR);
 }
 
 /**
@@ -143,8 +144,9 @@ const format = (sequence: string): string => {
  */
 const calculate = (sequence: string): number | never => {
     const stack = new Stack<number>();
+    const seq = sequence.split(SEPARATOR);
 
-    for (let token of sequence) {
+    for (let token of seq) {
         if (isNumericString(token)) {
             stack.push(parseInt(token));
             continue;

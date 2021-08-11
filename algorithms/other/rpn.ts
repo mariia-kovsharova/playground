@@ -15,12 +15,14 @@ type OperationMapping = {
 type Operation = '(' | ')' | '*' | '/' | '%' | '^' | '+' | '-';
 
 const BRACES_OPERATIONS: Array<string> = ['(', ')'];
-const HIGH_ORDER_OPERATIONS: Array<string> = ['*', '/', '%', '^'];
+
+const TOP_ORDER_OPERATIONS: Array<string> = ['^'];
+const HIGH_ORDER_OPERATIONS: Array<string> = ['*', '/', '%'];
 const LOW_ORDER_OPERATIONS: Array<string> = ['+', '-'];
 
 const SEPARATOR = ':';
 
-const OPERATIONS: Array<string> = HIGH_ORDER_OPERATIONS.concat(LOW_ORDER_OPERATIONS);
+const OPERATIONS: Array<string> = TOP_ORDER_OPERATIONS.concat(HIGH_ORDER_OPERATIONS, LOW_ORDER_OPERATIONS);
 
 const OPERATIONS_MAPPER = <OperationMapping>{
     '+': (a: number, b: number): number => a + b,
@@ -39,33 +41,14 @@ const isBraceOperation = (v: string): v is '(' | ')' => BRACES_OPERATIONS.includ
 
 const isNumericString = (v: string): boolean => !isNaN(parseInt(v));
 
-const getOrderedOperations = (a: Operation, b: Operation): [Operation, Operation] => {
-    if (HIGH_ORDER_OPERATIONS.includes(a) && HIGH_ORDER_OPERATIONS.includes(b)) {
-        return [a, b];
-    }
-
-    if (HIGH_ORDER_OPERATIONS.includes(a) && LOW_ORDER_OPERATIONS.includes(b)) {
-        return [a, b];
-    }
-
-    if (LOW_ORDER_OPERATIONS.includes(a) && HIGH_ORDER_OPERATIONS.includes(b)) {
-        return [b, a];
-    }
-
-    if (BRACES_OPERATIONS.includes(a)) {
-        return [b, a];
-    }
-
-    if (BRACES_OPERATIONS.includes(b)) {
-        return [a, b];
-    }
-
-    return [a, b];
-};
-
-const areOperationsTheSamePriority = (a: string, b: string): boolean =>
-    (HIGH_ORDER_OPERATIONS.includes(a) && HIGH_ORDER_OPERATIONS.includes(b))
+const isSamePriority = (a: string, b: string): boolean =>
+    (TOP_ORDER_OPERATIONS.includes(a) && TOP_ORDER_OPERATIONS.includes(b))
+    || (HIGH_ORDER_OPERATIONS.includes(a) && HIGH_ORDER_OPERATIONS.includes(b))
     || (LOW_ORDER_OPERATIONS.includes(a) && LOW_ORDER_OPERATIONS.includes(b));
+
+const isHigherPriority = (a: string, b: string): boolean =>
+    (TOP_ORDER_OPERATIONS.includes(a)) && (TOP_ORDER_OPERATIONS.includes(b) || HIGH_ORDER_OPERATIONS.includes(b) || LOW_ORDER_OPERATIONS.includes(b)) ||
+    (HIGH_ORDER_OPERATIONS.includes(a) && (HIGH_ORDER_OPERATIONS.includes(b) || LOW_ORDER_OPERATIONS.includes(b)))
 
 
 /**
@@ -110,17 +93,29 @@ const format = (sequence: string): string => {
                 continue;
             }
 
-            const prevOperand = operations.pop();
-            const [high, low] = getOrderedOperations(prevOperand, char);
+            const currentTop = operations.top();
+
+            // Скобки служат исключительно маркером области текущего 
+            // выражения, с ними не должны сравнивать
+            if (isBraceOperation(currentTop)) {
+                operations.push(char);
+                continue;
+            }
 
             // Если операции одного приоритета, в стек они попадают во встреченном порядке
             // т.е. сначала идет предыдущий встреченный знак операции
-            if (areOperationsTheSamePriority(high, low)) {
-                result.push(high);
-                operations.push(low);
+            if (isSamePriority(currentTop, char)) {
+                const currentTopChar = operations.pop();
+                result.push(currentTopChar);
+                operations.push(char);
             } else {
-                operations.push(low);
-                operations.push(high);
+                if (isHigherPriority(currentTop, char)) {
+                    const currentTopChar = operations.pop();
+                    result.push(currentTopChar);
+                    operations.push(char);
+                } else {
+                    operations.push(char);
+                }
             }
 
             continue;
@@ -173,27 +168,29 @@ const rpn = (seq: string): number => {
     return calculate(prefix);
 }
 
-// const first = rpn('1 + 3');
-// const sec = rpn('2 * 6');
-// const th = rpn('9 / 3');
-// const four = rpn('5 - 2');
-// const five = rpn('(2 + 2) * 2');
+const first = rpn('1 + 3');
+const sec = rpn('2 * 6');
+const th = rpn('9 / 3');
+const four = rpn('5 - 2');
+const five = rpn('(2 + 2) * 2');
 const six = rpn('(6 + 10 - 4) / (1 + 1 * 2 ) + 1');
-// const seven = rpn('6 ^ 2');
-// const eight = rpn('(8 + 2 * 5) / (1 + 3 * 2 - 4)');
-// const nine = rpn('2 + 3 * 4');
-// const ten = rpn('(0 + 3 * 4) / (2 * (1 + 1))');
+const seven = rpn('6 ^ 2');
+const eight = rpn('(8 + 2 * 5) / (1 + 3 * 2 - 4)');
+const nine = rpn('2 + 3 * 4');
+const ten = rpn('(0 + 3 * 4) / (2 * (1 + 1))');
+const eleven = rpn('2 ^ 3 * 4');
 
-// assert(first === 4);
-// assert(sec === 12);
-// assert(th === 3);
-// assert(four === 3);
-// assert(five === 8);
+assert(first === 4);
+assert(sec === 12);
+assert(th === 3);
+assert(four === 3);
+assert(five === 8);
 assert(six === 5);
-// assert(seven === 36);
-// assert(eight === 6);
-// assert(nine === 14);
-// assert(ten === 3);
+assert(seven === 36);
+assert(eight === 6);
+assert(nine === 14);
+assert(ten === 3);
+assert(eleven === 32);
 
 console.log('done');
 

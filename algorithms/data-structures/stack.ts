@@ -30,6 +30,14 @@ export class Stack<T = any> {
         return item!;
     }
 
+    public top(): T | never {
+        if (this.isEmpty()) {
+            throw new Error('Can not get top from empty stack')
+        }
+
+        return this.stack[this.size() - 1];
+    }
+
     public print(): string {
         return this.stack.toString();
     }

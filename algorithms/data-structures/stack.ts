@@ -5,8 +5,12 @@ export class Stack<T = any> {
         this.stack = <Array<T>>[];
     }
 
+    public clear(): void {
+        this.stack = <Array<T>>[];
+    }
+
     public isEmpty(): boolean {
-        return !!this.stack.length;
+        return this.stack.length === 0;
     }
 
     public size(): number {

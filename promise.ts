@@ -25,8 +25,8 @@ class CustomPromise<T = any> {
     PromiseState: STATES;
     PromiseResult: T | undefined | null | Error;
 
-    PromiseFulfillReactions: FulfilledHandler<T>[];
-    PromiseRejectReactions: RejectHandler<T>[];
+    PromiseFulfillReactions: ResolveFunction<T>[];
+    PromiseRejectReactions: RejectFunction<T>[];
 
     constructor(executor: (resolve: ResolveFunction<T>, reject: RejectFunction<T>) => void) {
         this.id = counter++;
@@ -117,7 +117,7 @@ class CustomPromise<T = any> {
             const onRejectHander = (reason: any): void => {
                 // Полученная причина передается в функцию-коллбэк onReject
                 const rejectedResult = onReject(reason);
-                // Затем новый промис РЕЗОЛВИТСЯ с результатом ТЕКУШЕГО
+                // Затем новый промис РЕЗОЛВИТСЯ с результатом ТЕКУЩЕГО (для простоты)
                 nextResolve(rejectedResult);
             }
 
@@ -146,81 +146,9 @@ class CustomPromise<T = any> {
     }
 }
 
-// const test = async () => {
-//     const firstFulfillMessage = 'First Fulfilled';
-//     const secondFulfillMessage = 'Second Fulfilled';
-
-//     const resolveMessage = 'Resolved';
-
-//     const messages: string[] = [];
-//     const messages2: string[] = [];
-
-//     const resolvedPromise = new CustomPromise<string>((resolve) => {
-//         resolve(resolveMessage);
-//     });
-
-//     console.log('step 1');
-//     console.log(messages);
-//     console.log(messages2);
-
-//     // eslint-disable-next-line jest/valid-expect-in-promise
-//     const modifiedPromise = resolvedPromise
-//         .then((message?: string): void => {
-//             if (message) {
-//                 messages.push(message);
-//             }
-//             messages.push(firstFulfillMessage);
-//         });
-
-//     const modifiedPromise2 = resolvedPromise
-//         .then((message?: string): void => {
-//             if (message) {
-//                 messages.push(message);
-//             }
-//             messages2.push(secondFulfillMessage);
-//         });
-
-//     console.log('step 2');
-//     console.log(messages);
-//     console.log(messages2);
-
-//     await modifiedPromise
-//         .then(() => {
-//             messages.push('I am last');
-//         });
-
-//     await modifiedPromise2
-//         .then(() => {
-//             messages2.push('I am last for second');
-//         });
-
-//     console.log('step 3');
-//     console.log(messages);
-//     console.log(messages2);
-// };
-
-// const rejectTest = async () => {
-//     const resolveMessage = 'Resolved';
-//     const rejectMessage = 'Ooops!';
-
-//     const rejectedPromise = new CustomPromise<string>((resolve, reject) => {
-//         reject(rejectMessage);
-//         resolve(resolveMessage);
-//     });
-
-//     await rejectedPromise.then(
-//         (value?: string) => {
-//             console.log('I should have never been called');
-//         },
-//         (err: any) => {
-//             console.error(err);
-//         });
-
-
-// };
-
+// TODO: как типизировать промис в зависимости от параметра в resolve?
 const test = async () => {
-    const promise = new CustomPromise<string>((resolve) => {
+    const promise = new CustomPromise((resolve) => {
         resolve('Hello, world!');
     });
 
@@ -238,6 +166,77 @@ const test = async () => {
 
     console.log(result);
 }
+
+const test2 = async () => {
+    const firstFulfillMessage = 'First Fulfilled';
+    const secondFulfillMessage = 'Second Fulfilled';
+
+    const resolveMessage = 'Resolved';
+
+    const messages: string[] = [];
+    const messages2: string[] = [];
+
+    const resolvedPromise = new CustomPromise<string>((resolve) => {
+        resolve(resolveMessage);
+    });
+
+    console.log('step 1');
+    console.log(messages);
+    console.log(messages2);
+
+    // eslint-disable-next-line jest/valid-expect-in-promise
+    const modifiedPromise = resolvedPromise
+        .then((message?: string): void => {
+            if (message) {
+                messages.push(message);
+            }
+            messages.push(firstFulfillMessage);
+        });
+
+    const modifiedPromise2 = resolvedPromise
+        .then((message?: string): void => {
+            if (message) {
+                messages.push(message);
+            }
+            messages2.push(secondFulfillMessage);
+        });
+
+    console.log('step 2');
+    console.log(messages);
+    console.log(messages2);
+
+    await modifiedPromise
+        .then(() => {
+            messages.push('I am last');
+        });
+
+    await modifiedPromise2
+        .then(() => {
+            messages2.push('I am last for second');
+        });
+
+    console.log('step 3');
+    console.log(messages);
+    console.log(messages2);
+};
+
+const rejectTest = async () => {
+    const resolveMessage = 'Resolved';
+    const rejectMessage = 'Ooops!';
+
+    const rejectedPromise = new CustomPromise<string>((resolve, reject) => {
+        reject(rejectMessage);
+        resolve(resolveMessage);
+    });
+
+    await rejectedPromise.then(
+        (value?: string) => {
+            console.log('I should have never been called');
+        },
+        (err: any) => {
+            console.error(err);
+        });
+};
 
 test();
 

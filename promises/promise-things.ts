@@ -1,0 +1,156 @@
+import assert from 'assert';
+
+declare global {
+    interface PromiseConstructor {
+        //TODO: Promise<Array<any>>
+        none<T>(promises: Array<Promise<T> | PromiseLike<T>>): Promise<any>;
+
+        any<T>(promises: Array<Promise<T> | PromiseLike<T>>): Promise<T>;
+
+        first<T>(promises: Array<Promise<T> | PromiseLike<T>>): Promise<T>;
+
+        last<T>(promises: Array<Promise<T> | PromiseLike<T>>): Promise<T>;
+    }
+}
+
+if (!Promise.none) {
+    // По своей сути - это Promise.all наоборот - если все промисы зареджектены,
+    // тогда промис резолвится со значениями реджектов.
+    Promise.none = function <T>(promises: Array<Promise<T> | PromiseLike<T>>) {
+        // Создаем главный промис, который и будет результатом функции
+        const mainPromise = new Promise((resolve, reject) => {
+            // Промис-результат обхода всех промисов-параметров
+            const reducePromiseResult = promises.reduce(
+                // TODO: внизу по идее должно быть Promise<any[]>?
+                (accPromise: Promise<any[]>, promise: Promise<T> | PromiseLike<T>): Promise<any[]> => {
+                    // Promise.resolve нужен для того, чтобы переданное значение точно было промисом, 
+                    // а не простым значением или thenable
+                    const trustedPromise = Promise.resolve(promise);
+
+                    // Если этот промис был успешно завершен, отклоняем промис-аккумулятор
+                    trustedPromise.then((value: T) => {
+                        console.log(`got fulfilled value: ${value}`);
+                        return accPromise.then(() => Promise.reject(value));
+                    });
+
+                    /**
+                     * Иначе выполняются следующие шаги:
+                     * 1) полученный аккумулятор является промисом, получаем текущие значения
+                     * аккумулятора через then
+                     * 2) возвращаем новый промис, который резолвится новым аккумулятором,
+                     * а именно "предыдущие ошибки и текущая ошибка"
+                     */
+                    trustedPromise.catch(reason => {
+                        console.log('should not exec');
+                        console.log(reason);
+
+                        return accPromise.then(previousReasons => {
+                            return Promise.resolve([...previousReasons, reason]);
+                        });
+                    });
+
+                    return trustedPromise;
+                },
+                // В качестве стартового аккумулятора - зарезолвенный промис со значеним пустого массива
+                Promise.resolve(<any>[])
+            );
+
+            reducePromiseResult
+                .then(reasons => {
+                    console.log('LIST OF REASONS', reasons);
+                    // Наконец, от результатов редьюса получаем список ошибок
+                    // и РЕЗОЛВИМ ГЛАВНЫЙ ПРОМИС с аккумулятором (списком ошибок)
+                    resolve(reasons);
+                })
+                // Иначе - получаем значение любого УСПЕШНОГО промиса из promises
+                // и РЕДЖЕКТИМ ГЛАВНЫЙ ПРОМИС с этим значением
+                .catch(fulfilledValueAsReason => {
+                    console.log('CATCH-a!', fulfilledValueAsReason);
+                    reject(fulfilledValueAsReason);
+                });
+        });
+
+        return mainPromise;
+    }
+}
+
+if (!Promise.first) {
+    Promise.first = function <T>(promises: Array<Promise<T> | PromiseLike<T>>) {
+        return new Promise<T>((resolve, reject) => {
+            promises.forEach((promise: Promise<T> | PromiseLike<T>) => {
+                // Promise.resolve нужен для того, чтобы переданное значение точно было промисом, 
+                // а не простым значением или thenable
+                Promise.resolve(promise)
+                    // Первый промис, который зарезолвится,
+                    // зарезолвит главный промис своим значением
+                    .then(value => {
+                        resolve(value);
+                    });
+            });
+
+            // Если все промисы отклонены, отклоняем главный промис
+            Promise.none(promises)
+                .then(values => {
+                    reject(values);
+                });
+        })
+    }
+}
+
+const resolvePromise = <T>(value: T, timeout = 3000): Promise<T> => {
+    return new Promise((resolve) => {
+        setTimeout(() => {
+            resolve(value);
+        }, timeout);
+    })
+};
+
+const rejectPromise = <T>(reason: T, timeout = 3000): Promise<T> => {
+    return new Promise((_resolve, reject) => {
+        setTimeout(() => {
+            reject(reason);
+        }, timeout);
+    })
+};
+
+const rejectionReasons = [1, 2, 3];
+const rejectionTimeouts = [null, 5000, 400];
+
+const rejectionPromises = rejectionReasons.map((reason, index) => {
+    const timeout = rejectionTimeouts[index];
+    if (timeout) {
+        return rejectPromise(reason, timeout);
+    }
+    return rejectPromise(reason);
+})
+
+// const testPromiseNoneOne = Promise.none(rejectionPromises);
+
+// testPromiseNoneOne.then(reasons => {
+//     console.log('success');
+//     console.log(reasons);
+//     reasons.forEach((reason, index) => {
+//         assert(reason === rejectionReasons[index]);
+//     })
+// }).catch(error => {
+//     console.log('error');
+//     console.log(error);
+// });
+
+const testPromiseNoneTwo = Promise.none([
+    // ...rejectionPromises,
+    resolvePromise(9999, 100)
+]);
+
+testPromiseNoneTwo.then(reasons => {
+    console.log('success');
+    console.log(reasons);
+    // reasons.forEach((reason, index) => {
+    //     assert(reason === rejectionReasons[index]);
+    // })
+}).catch(error => {
+    console.log('error');
+    console.log(error);
+});
+
+export { };

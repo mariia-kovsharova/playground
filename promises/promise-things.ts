@@ -17,60 +17,39 @@ if (!Promise.none) {
     // По своей сути - это Promise.all наоборот - если все промисы зареджектены,
     // тогда промис резолвится со значениями реджектов.
     Promise.none = function <T>(promises: Array<Promise<T> | PromiseLike<T>>) {
-        // Создаем главный промис, который и будет результатом функции
-        const mainPromise = new Promise((resolve, reject) => {
+        return new Promise((resolve, reject) => {
             // Промис-результат обхода всех промисов-параметров
-            const reducePromiseResult = promises.reduce(
-                // TODO: внизу по идее должно быть Promise<any[]>?
-                (accPromise: Promise<any[]>, promise: Promise<T> | PromiseLike<T>): Promise<any[]> => {
-                    // Promise.resolve нужен для того, чтобы переданное значение точно было промисом, 
-                    // а не простым значением или thenable
+            const reducePromise = promises.reduce(
+                (accumulator: Promise<any>, promise: Promise<T> | PromiseLike<T>) => {
                     const trustedPromise = Promise.resolve(promise);
 
-                    // Если этот промис был успешно завершен, отклоняем промис-аккумулятор
-                    trustedPromise.then((value: T) => {
-                        console.log(`got fulfilled value: ${value}`);
-                        return accPromise.then(() => Promise.reject(value));
-                    });
-
-                    /**
-                     * Иначе выполняются следующие шаги:
-                     * 1) полученный аккумулятор является промисом, получаем текущие значения
-                     * аккумулятора через then
-                     * 2) возвращаем новый промис, который резолвится новым аккумулятором,
-                     * а именно "предыдущие ошибки и текущая ошибка"
-                     */
-                    trustedPromise.catch(reason => {
-                        console.log('should not exec');
-                        console.log(reason);
-
-                        return accPromise.then(previousReasons => {
-                            return Promise.resolve([...previousReasons, reason]);
+                    return trustedPromise
+                        // Возвращаем не сам "истинный" промис, а результат его обработки
+                        // т.е. в случае ошибки - возвращаем увеличенный аккумулятор
+                        .then(result => {
+                            // Если какой-то из промисов успешно завершился,
+                            // можем сразу отклонить ГЛАВНЫЙ ПРОМИС
+                            reject(result);
+                        })
+                        .catch(reason => {
+                            /**
+                            * Иначе выполняются следующие шаги:
+                            * 1) полученный аккумулятор является промисом, получаем текущие значения
+                            * аккумулятора через then
+                            * 2) возвращаем новый промис, который резолвится новым аккумулятором,
+                            * а именно "предыдущие ошибки и текущая ошибка"
+                            */
+                            return accumulator
+                                .then(previousReasons => [...previousReasons, reason]);
                         });
-                    });
-
-                    return trustedPromise;
                 },
-                // В качестве стартового аккумулятора - зарезолвенный промис со значеним пустого массива
                 Promise.resolve(<any>[])
             );
 
-            reducePromiseResult
-                .then(reasons => {
-                    console.log('LIST OF REASONS', reasons);
-                    // Наконец, от результатов редьюса получаем список ошибок
-                    // и РЕЗОЛВИМ ГЛАВНЫЙ ПРОМИС с аккумулятором (списком ошибок)
-                    resolve(reasons);
-                })
-                // Иначе - получаем значение любого УСПЕШНОГО промиса из promises
-                // и РЕДЖЕКТИМ ГЛАВНЫЙ ПРОМИС с этим значением
-                .catch(fulfilledValueAsReason => {
-                    console.log('CATCH-a!', fulfilledValueAsReason);
-                    reject(fulfilledValueAsReason);
-                });
+            reducePromise.then(reasons => {
+                resolve(reasons);
+            });
         });
-
-        return mainPromise;
     }
 }
 
@@ -124,30 +103,27 @@ const rejectionPromises = rejectionReasons.map((reason, index) => {
     return rejectPromise(reason);
 })
 
-// const testPromiseNoneOne = Promise.none(rejectionPromises);
+const testPromiseNoneOne = Promise.none(rejectionPromises);
 
-// testPromiseNoneOne.then(reasons => {
-//     console.log('success');
-//     console.log(reasons);
-//     reasons.forEach((reason, index) => {
-//         assert(reason === rejectionReasons[index]);
-//     })
-// }).catch(error => {
-//     console.log('error');
-//     console.log(error);
-// });
+testPromiseNoneOne.then(reasons => {
+    console.log('success');
+    console.log(reasons);
+    reasons.forEach((reason, index) => {
+        assert(reason === rejectionReasons[index]);
+    })
+}).catch(error => {
+    console.log('error');
+    console.log(error);
+});
 
 const testPromiseNoneTwo = Promise.none([
-    // ...rejectionPromises,
+    ...rejectionPromises,
     resolvePromise(9999, 100)
 ]);
 
 testPromiseNoneTwo.then(reasons => {
-    console.log('success');
+    console.log('SHOULD NOT BEING HERE!!!');
     console.log(reasons);
-    // reasons.forEach((reason, index) => {
-    //     assert(reason === rejectionReasons[index]);
-    // })
 }).catch(error => {
     console.log('error');
     console.log(error);

@@ -34,12 +34,35 @@ if (!Promise.last) {
                             if (resolvedPromisesCount === promises.length) {
                                 resolve(value);
                             }
+                            /**
+                             * ОЧЕНЬ ВАЖНО ЗДЕСЬ СВЯЗАТЬ аккумулятор
+                             * Т.к. reduce - СИНХРОННЫЙ и обходит промисы СИНХРОННО
+                             * 
+                             * Т.е. еще ДО ТОГО, как промисы начнут резолвиться,
+                             * у нас УЖЕ будет установленная цепочка того, КАК будут передаваться
+                             * значения
+                             * 
+                             * Т.е. по сути, у нас получится ОДНА БОЛЬШАЯ ЦЕПОЧКА
+                             * 
+                             * new Promise( (resolve, reject) => {
+                             *  // Promise #1
+                             *    resolve();
+                             * }).then( (result) => {
+                             *   // Promise #2
+                             *   return result;
+                             * }).then( (result) => { 
+                             *   // Promise #3
+                             *   return result;
+                             * }); // ... и т.д!
+                             * 
+                             */
                             return acc;
                         })
                         // Иначе - в аккумулятор добавляется новая причина отклонения промиса
                         .catch(reason => {
                             resolvedPromisesCount += 1;
                             return acc.then(previousReasons => {
+                                // Создается новый промис, который резолвится обновленным значением
                                 return [...previousReasons, reason];
                             });
                         })

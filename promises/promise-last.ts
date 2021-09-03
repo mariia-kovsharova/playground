@@ -30,6 +30,8 @@ if (!Promise.last) {
                         // Последний промис, который зарезолвится,
                         // зарезолвит главный промис своим значением
                         .then(value => {
+                            console.log(`value: ${value}, count: ${resolvedPromisesCount}`);
+
                             resolvedPromisesCount += 1;
                             if (resolvedPromisesCount === promises.length) {
                                 resolve(value);
@@ -56,11 +58,23 @@ if (!Promise.last) {
                              * }); // ... и т.д!
                              * 
                              */
+
+                            /**
+                             * Если тут не связать аккумулятор в цепочку,
+                             * в качестве reasonsReducePromise вернется новый, созданный неявно
+                             * от ПЕРВОГО ЖЕ ЗАРЕЗОЛВЛЕННОГО промиса  
+                             * (со значением undefined), и именно этот несвязанный промис
+                             * зареджектит ОСНОВНОЙ, что будет являться ошибкой в логике
+                             */
+
                             return acc;
                         })
                         // Иначе - в аккумулятор добавляется новая причина отклонения промиса
                         .catch(reason => {
+                            console.log(`reason: ${reason}, count: ${resolvedPromisesCount}`);
+
                             resolvedPromisesCount += 1;
+
                             return acc.then(previousReasons => {
                                 // Создается новый промис, который резолвится обновленным значением
                                 return [...previousReasons, reason];
@@ -73,6 +87,8 @@ if (!Promise.last) {
             reasonsReducePromise.then(reasons => {
                 // Получаем от промиса-аккумулятора причины и реджектим ГЛАВНЫЙ промис
                 // значениями причин
+
+                console.log('all promises have been !');
                 reject(reasons);
             });
         })
@@ -140,54 +156,6 @@ const test = () => {
             console.log(error);
         });
 
-    const two = Promise.last([
-        ...resolvedPromises,
-        resolvePromise(9999, 8000)
-    ]);
-
-    two
-        .then(value => {
-            console.log('TWO PROMISE FULFILLED');
-            console.log(value);
-
-            assert(value === 9999);
-        }).catch(error => {
-            console.log('TWO PROMISE REJECTED');
-            console.log(error);
-        });
-
-    const three = Promise.last([
-        resolvePromise(1, 100),
-        rejectPromise(12345),
-        resolvePromise(0)
-    ]);
-
-    three
-        .then(value => {
-            console.log('THREE PROMISE FULFILLED');
-            console.log(value);
-
-            assert(value === 0);
-        }).catch(errors => {
-            console.log('THREE PROMISE REJECTED');
-            console.log(errors);
-        });
-
-    const four = Promise.last<number | string | boolean>([
-        rejectPromise(12345),
-        rejectPromise(1),
-        rejectPromise('foo'),
-        rejectPromise(true)
-    ]);
-
-    four
-        .then(reasons => {
-            console.log('FOUR PROMISE FULFILLED');
-            console.log(reasons);
-        }).catch(errors => {
-            console.log('FOUR PROMISE REJECTED');
-            console.log(errors);
-        });
 }
 
 test();

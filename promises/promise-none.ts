@@ -65,6 +65,7 @@ if (!Promise.noneAsyncAwait) {
         return new Promise((resolve, reject) => {
             // Промис-результат обхода всех промисов-параметров
             const reducePromise = promises.reduce(
+                // TODO: why Promise<any>?
                 async (accumulator: Promise<any>, promise: Promise<T> | PromiseLike<T>) => {
                     try {
                         const trustedPromise = Promise.resolve(promise);

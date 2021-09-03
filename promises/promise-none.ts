@@ -13,8 +13,7 @@ declare global {
     interface PromiseConstructor {
         //TODO: Promise<Array<any>>
         none<T>(promises: Array<Promise<T> | PromiseLike<T>>): Promise<any>;
-
-        noneAlt<T>(promises: Array<Promise<T> | PromiseLike<T>>): Promise<any>;
+        noneAsyncAwait<T>(promises: Array<Promise<T> | PromiseLike<T>>): Promise<any>;
     }
 }
 if (!Promise.none) {
@@ -59,9 +58,9 @@ if (!Promise.none) {
     }
 }
 
-if (!Promise.noneAlt) {
-    // Или второй вариант реализации, тоже на редьюсере
-    Promise.noneAlt = function <T>(promises: Array<Promise<T> | PromiseLike<T>>) {
+if (!Promise.noneAsyncAwait) {
+    // Или второй вариант реализации, тоже на редьюсере, с async\await для простоты
+    Promise.noneAsyncAwait = function <T>(promises: Array<Promise<T> | PromiseLike<T>>) {
         // Создаем главный промис, который и будет результатом функции
         return new Promise((resolve, reject) => {
             // Промис-результат обхода всех промисов-параметров
@@ -70,9 +69,7 @@ if (!Promise.noneAlt) {
                     try {
                         const trustedPromise = Promise.resolve(promise);
                         const result = await trustedPromise;
-
                         return Promise.reject(result);
-
                     } catch (ex) {
                         const acc = await accumulator;
                         return [...acc, ex];
@@ -81,7 +78,7 @@ if (!Promise.noneAlt) {
                 Promise.resolve(<any>[])
             );
 
-            // Второй вариант отличается тем, что резолв\реджект основного промиса
+            // Второй вариант еще отличается тем, что резолв\реджект основного промиса
             // Идет непосредственно от результата промиса-аккумулятора
             reducePromise
                 // Если промис-аккумулятор завершен успешно, ГЛАВНЫЙ промис резолвится
@@ -138,7 +135,7 @@ const test = () => {
             console.log(error);
         });
 
-    const three = Promise.noneAlt([
+    const three = Promise.noneAsyncAwait([
         resolvePromise(12345)
     ]);
 

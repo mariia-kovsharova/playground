@@ -50,8 +50,6 @@ if (!Promise.my_any) {
 
             reduceResult
                 .then(values => {
-                    console.log('values', values);
-
                     if (values.length) {
                         resolve(values);
                     } else {

@@ -44,6 +44,8 @@ class LinkedList<T = any> {
         if (!this.head || !this.tail) {
             this.head = node;
             this.tail = node;
+            this._size += 1;
+
             return this;
         }
 
@@ -68,6 +70,8 @@ class LinkedList<T = any> {
         if (!this.head || !this.tail) {
             this.head = node;
             this.tail = node;
+            this._size += 1;
+
             return this;
         }
 
@@ -197,6 +201,8 @@ const appendTest = (): void => {
 
     assert(list.toString() === '1,2,3');
     assert(list.size === 3);
+
+    console.log('SUCCESS appendTest');
 }
 
 const prependTest = (): void => {
@@ -207,9 +213,11 @@ const prependTest = (): void => {
 
     assert(list.toString() === '3,2,1');
     assert(list.size === 3);
+
+    console.log('SUCCESS prependTest');
 }
 
-const common = (): void => {
+const commonTest = (): void => {
     const list = new LinkedList<number>();
     list.append(1);
     list.append(2);
@@ -234,6 +242,13 @@ const common = (): void => {
     assert(list.size === 3);
 };
 
-common();
+const test = () => {
+    appendTest();
+    prependTest();
+
+    // commonTest();
+}
+
+test();
 
 export { LinkedList };

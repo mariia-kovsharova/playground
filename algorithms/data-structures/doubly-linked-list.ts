@@ -2,11 +2,13 @@ import assert from 'assert';
 
 class Node<T = any> {
     public value: T;
+    public previous: Node<T> | null;
     public next: Node<T> | null;
 
-    constructor(value: T, next: Node<T> | null = null) {
+    constructor(value: T, next: Node<T> | null = null, previous: Node<T> | null = null) {
         this.value = value;
         this.next = next;
+        this.previous = previous;
     }
 
     toString(): string {
@@ -14,7 +16,7 @@ class Node<T = any> {
     }
 }
 
-class LinkedList<T = any> {
+class DoublyLinkedList<T = any> {
     private static readonly Separator = ',';
 
     private head: Node<T> | null;
@@ -37,7 +39,7 @@ class LinkedList<T = any> {
      * 
      * @param value значения для узла, который помещается в начало списка
      */
-    prepend(value: T): LinkedList<T> {
+    prepend(value: T): DoublyLinkedList<T> {
         const node = new Node(value);
 
         if (!this.head || !this.tail) {
@@ -49,6 +51,8 @@ class LinkedList<T = any> {
         }
 
         const currentHead = this.head;
+        currentHead.previous = node;
+
         node.next = currentHead;
 
         this.head = node;
@@ -63,7 +67,7 @@ class LinkedList<T = any> {
      * @param index - позиция, на которую надо вставлять элемент.
      * Если индекс не указан, элемент просто добавляется в конец списка
      */
-    append(value: T, index?: number): LinkedList<T> {
+    append(value: T, index?: number): DoublyLinkedList<T> {
         const node = new Node(value);
 
         if (!this.head || !this.tail) {
@@ -79,18 +83,22 @@ class LinkedList<T = any> {
         } else if (!index || index >= this.size || index < 0) {
             const currentTail = this.tail;
             currentTail.next = node;
+            node.previous = currentTail;
 
             this.tail = node;
             this._size += 1;
         } else {
             let nodeAtIndex: Node<T> = this.head;
 
-            for (let innerIndex = 0; innerIndex < index - 1; innerIndex += 1) {
+            for (let innerIndex = 0; innerIndex < index; innerIndex += 1) {
                 nodeAtIndex = nodeAtIndex.next as NonNullable<Node<T>>;
             }
 
-            node.next = nodeAtIndex.next;
-            nodeAtIndex.next = node;
+            node.next = nodeAtIndex;
+            node.previous = nodeAtIndex.previous;
+
+            node.previous!.next = node;
+            nodeAtIndex.previous = node;
 
             this._size += 1;
         }
@@ -110,7 +118,6 @@ class LinkedList<T = any> {
         }
 
         let currentNode: Node<T> | null = this.head;
-        let prevNode: Node<T> | null = null;
         let nextNode: Node<T> | null = null;
 
         while (currentNode) {
@@ -125,19 +132,20 @@ class LinkedList<T = any> {
 
                 if (currentNode === this.head) {
                     this.head = nextNode;
+                    this.head!.previous = null;
                 }
 
                 if (currentNode === this.tail) {
-                    this.tail = prevNode;
+                    this.tail = this.tail.previous;
+                    this.tail!.next = null;
                 }
 
-                if (prevNode) {
-                    prevNode.next = nextNode;
+                if (currentNode.previous !== null) {
+                    currentNode.previous.next = nextNode;
                 }
 
                 currentNode = nextNode;
             } else {
-                prevNode = currentNode;
                 currentNode = currentNode.next;
             }
         }
@@ -162,6 +170,7 @@ class LinkedList<T = any> {
         }
 
         this.head = this.head.next;
+        this.head!.previous = null;
 
         return value;
     }
@@ -171,7 +180,7 @@ class LinkedList<T = any> {
      * @returns значение удаленного узла или null, если такого узла нет
      */
     deleteTail(): T | null {
-        if (!this.head || !this.tail) {
+        if (!this.tail) {
             return null;
         }
 
@@ -182,13 +191,8 @@ class LinkedList<T = any> {
             return value;
         }
 
-        let beforeNode: Node<T> = this.head;
-
-        while (beforeNode.next && beforeNode.next !== this.tail) {
-            beforeNode = beforeNode.next;
-        }
-
-        this.tail = beforeNode;
+        this.tail = this.tail.previous;
+        this.tail!.next = null;
 
         return value;
     }
@@ -215,7 +219,7 @@ class LinkedList<T = any> {
      * в текущий список
      * @returns связанный список типа Т
      */
-    fromArray(items?: Iterable<T>): LinkedList {
+    fromArray(items?: Iterable<T>): DoublyLinkedList {
         if (items) {
             for (const value of items) {
                 this.append(value);
@@ -231,56 +235,44 @@ class LinkedList<T = any> {
      * в котором они расположены в связанном списке
      */
     toString(): string {
-        return this.toArray().join(LinkedList.Separator);
+        return this.toArray().join(DoublyLinkedList.Separator);
     }
 
     /**
      * 
      * Разворачивает список - головной элемент становится хвостовым, и наоборот.
-     * Узлы меняют направление
-     * 
+     * Элементы между головными меняют ссылки на next и previous узлы
      */
     reverse(): void {
         if (!this.head || !this.tail || this.head === this.tail) {
             return;
         }
 
-        let currentNode: Node<T> | null = this.head;
+        let currentNode = this.head.next;
 
-        let prevNode: Node<T> | null = null;
-        let nextNode: Node<T> | null = null;
+        while (currentNode?.next) {
+            const { next, previous } = currentNode;
+            currentNode.previous = next;
+            currentNode.next = previous;
 
-        while (currentNode) {
-            // Следующая нода, которую мы будем рассматривать - нода next от текущей
-            // 1 -> 2
-            nextNode = currentNode.next;
-
-            // Текущий узел должен теперь указывать на предыдущий
-            currentNode.next = prevNode;
-
-            // Теперь предыдущим узлом становится текущий
-            prevNode = currentNode;
-
-            // Смотрим на бывший "следующий"
-            currentNode = nextNode;
+            currentNode = next;
         }
+
+        const { next } = this.head;
+        const { previous } = this.tail;
 
         [this.head, this.tail] = [this.tail, this.head];
-    }
 
-    private validate(): void | never {
-        if (this.head && !this.tail) {
-            throw new Error('Linked list can not have only head!');
-        }
+        this.head.previous = null;
+        this.head.next = previous;
 
-        if (!this.head && this.tail) {
-            throw new Error('Linked list can not have only tail!');
-        }
+        this.tail.next = null;
+        this.tail.previous = next;
     }
 }
 
 const appendTest = (): void => {
-    const list = new LinkedList<number>();
+    const list = new DoublyLinkedList<number>();
     list.append(1).append(2).append(3);
 
     assert(list.toString() === '1,2,3');
@@ -306,7 +298,7 @@ const appendTest = (): void => {
 }
 
 const prependTest = (): void => {
-    const list = new LinkedList<number>();
+    const list = new DoublyLinkedList<number>();
     list.prepend(1).prepend(2).prepend(3);
 
     assert(list.toString() === '3,2,1');
@@ -316,17 +308,16 @@ const prependTest = (): void => {
 }
 
 const deleteTest = () => {
-    const list = new LinkedList<string>();
-    list.append('foo').append('bar').append('baz')
-        .append('foo').append('foo').append('boo');
+    const list = new DoublyLinkedList<string>();
+    list.append('foo').append('bar').append('baz').append('foo').append('boo');
 
-    assert(list.toString() === 'foo,bar,baz,foo,foo,boo');
+    assert(list.toString() === 'foo,bar,baz,foo,boo');
 
     list.delete('foo');
 
     assert(list.toString() === 'bar,baz,boo');
 
-    const anotherList = new LinkedList<string>();
+    const anotherList = new DoublyLinkedList<string>();
 
     assert(anotherList.toString() === '');
 
@@ -346,7 +337,7 @@ const deleteTest = () => {
 }
 
 const deleteHeadTest = () => {
-    const list = new LinkedList<number>();
+    const list = new DoublyLinkedList<number>();
 
     const head1 = list.deleteHead();
 
@@ -371,7 +362,7 @@ const deleteHeadTest = () => {
 }
 
 const deleteTailTest = () => {
-    const list = new LinkedList<number>();
+    const list = new DoublyLinkedList<number>();
 
     const tail1 = list.deleteTail();
 
@@ -396,7 +387,7 @@ const deleteTailTest = () => {
 }
 
 const toArrayTest = () => {
-    const list = new LinkedList<number>();
+    const list = new DoublyLinkedList<number>();
     list.append(1).append(2).append(3).prepend(4);
 
     const arr = list.toArray();
@@ -411,7 +402,7 @@ const toArrayTest = () => {
 
 const fromArrayTest = () => {
     const array = ['one', 'two', 'three', 'four'];
-    const list = new LinkedList<string>();
+    const list = new DoublyLinkedList<string>();
     list.fromArray(array);
 
     const fromList = list.toArray();
@@ -423,7 +414,7 @@ const fromArrayTest = () => {
 }
 
 const reverseTest = () => {
-    const list = new LinkedList<number>();
+    const list = new DoublyLinkedList<number>();
     list.append(1).append(2).append(3).append(4).append(5);
 
     assert(list.toString() === '1,2,3,4,5');
@@ -450,4 +441,4 @@ const test = () => {
 
 test();
 
-export { LinkedList };
+export { DoublyLinkedList };

@@ -1,5 +1,3 @@
-import assert from 'assert';
-
 class Node<T = any> {
     public value: T;
     public next: Node<T> | null;
@@ -101,8 +99,6 @@ class LinkedList<T = any> {
     /**
      * 
      * @param value значение, узлы с которым необходимо удалить
-     * // TODO: чекануть жаву на тему возврата значения последнего
-     *  удаленного узла (но зачем?.. это же бессмысленно)
      */
     delete(value: T): void {
         if (!this.head || !this.tail) {
@@ -252,7 +248,6 @@ class LinkedList<T = any> {
 
         while (currentNode) {
             // Следующая нода, которую мы будем рассматривать - нода next от текущей
-            // 1 -> 2
             nextNode = currentNode.next;
 
             // Текущий узел должен теперь указывать на предыдущий
@@ -278,176 +273,5 @@ class LinkedList<T = any> {
         }
     }
 }
-
-const appendTest = (): void => {
-    const list = new LinkedList<number>();
-    list.append(1).append(2).append(3);
-
-    assert(list.toString() === '1,2,3');
-    assert(list.size === 3);
-
-    list.append(4, 2);
-
-    assert(list.toString() === '1,2,4,3');
-
-    list.append(5, 0);
-
-    assert(list.toString() === '5,1,2,4,3');
-
-    list.append(6, 5);
-
-    assert(list.toString() === '5,1,2,4,3,6');
-
-    list.append(7, 4);
-
-    assert(list.toString() === '5,1,2,4,7,3,6');
-
-    console.log('SUCCESS appendTest');
-}
-
-const prependTest = (): void => {
-    const list = new LinkedList<number>();
-    list.prepend(1).prepend(2).prepend(3);
-
-    assert(list.toString() === '3,2,1');
-    assert(list.size === 3);
-
-    console.log('SUCCESS prependTest');
-}
-
-const deleteTest = () => {
-    const list = new LinkedList<string>();
-    list.append('foo').append('bar').append('baz')
-        .append('foo').append('foo').append('boo');
-
-    assert(list.toString() === 'foo,bar,baz,foo,foo,boo');
-
-    list.delete('foo');
-
-    assert(list.toString() === 'bar,baz,boo');
-
-    const anotherList = new LinkedList<string>();
-
-    assert(anotherList.toString() === '');
-
-    anotherList.delete('baz');
-
-    assert(anotherList.toString() === '');
-
-    anotherList.append('baz');
-
-    assert(anotherList.toString() === 'baz');
-
-    anotherList.delete('baz');
-
-    assert(anotherList.toString() === '');
-
-    console.log('SUCCESS deleteTest');
-}
-
-const deleteHeadTest = () => {
-    const list = new LinkedList<number>();
-
-    const head1 = list.deleteHead();
-
-    assert(head1 === null);
-
-    list.append(1);
-    list.append(2);
-
-    const head2 = list.deleteHead();
-
-    assert(head2 === 1);
-
-    const head3 = list.deleteHead();
-
-    assert(head3 === 2);
-
-    const head4 = list.deleteHead();
-
-    assert(head4 === null);
-
-    console.log('SUCCESS deleteHeadTest');
-}
-
-const deleteTailTest = () => {
-    const list = new LinkedList<number>();
-
-    const tail1 = list.deleteTail();
-
-    assert(tail1 === null);
-
-    list.append(1);
-    list.append(2);
-
-    const tail2 = list.deleteTail();
-
-    assert(tail2 === 2);
-
-    const tail3 = list.deleteTail();
-
-    assert(tail3 === 1);
-
-    const tail4 = list.deleteTail();
-
-    assert(tail4 === null);
-
-    console.log('SUCCESS deleteTailTest');
-}
-
-const toArrayTest = () => {
-    const list = new LinkedList<number>();
-    list.append(1).append(2).append(3).prepend(4);
-
-    const arr = list.toArray();
-    const testArr = [4, 1, 2, 3];
-
-    testArr.forEach((item: number, index: number) => {
-        assert(item === arr[index]);
-    });
-
-    console.log('SUCCESS toArrayTest');
-}
-
-const fromArrayTest = () => {
-    const array = ['one', 'two', 'three', 'four'];
-    const list = new LinkedList<string>();
-    list.fromArray(array);
-
-    const fromList = list.toArray();
-    array.forEach((item: string, index: number) => {
-        assert(item === fromList[index]);
-    });
-
-    console.log('SUCCESS fromArrayTest');
-}
-
-const reverseTest = () => {
-    const list = new LinkedList<number>();
-    list.append(1).append(2).append(3).append(4).append(5);
-
-    assert(list.toString() === '1,2,3,4,5');
-    assert(list.size === 5);
-
-    list.reverse();
-
-    assert(list.toString() === '5,4,3,2,1');
-    assert(list.size === 5);
-
-    console.log('SUCCESS reverseTest');
-}
-
-const test = () => {
-    appendTest();
-    prependTest();
-    deleteTest();
-    deleteHeadTest();
-    deleteTailTest();
-    toArrayTest();
-    fromArrayTest();
-    reverseTest();
-}
-
-test();
 
 export { LinkedList };

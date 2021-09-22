@@ -1,5 +1,5 @@
 import assert from 'assert';
-import { rejectPromise, resolvePromise } from './utils';
+import { resolvePromise } from '../../utils';
 
 /**
  * Реализация Promise.any 

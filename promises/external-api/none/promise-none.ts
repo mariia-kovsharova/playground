@@ -1,5 +1,5 @@
 import assert from 'assert';
-import { rejectPromise, resolvePromise } from './utils';
+import { rejectPromise, resolvePromise } from '../../utils';
 
 /**
  * Реализация Promise.none - это Promise.all наоборот - если все промисы rejected,

@@ -1,20 +1,15 @@
-import assert from 'assert';
-import { isEqual } from 'lodash';
-
-type T = number | string;
-
 /** O(log n)
  * @param array массив элементов, в котором осуществляется поиск
  * @param item элемент, который ищем
  * 
  * Реализация рекурсией
  */
-const binaryRec = (array: Array<T>, item: T): number => {
-    const inner = (leftIndex: number, rightIndex: number): number => {
+const binarySearchRecursive = <T>(array: Array<T>, item: T): number | null => {
+    const inner = (leftIndex: number, rightIndex: number): number | null => {
         // базовый случай - если длина рассматриваемого массива 1
         if (leftIndex === rightIndex) {
-            // если искомый элемент является целевым, возвращаем его индекс, иначе -1
-            return item === array[leftIndex] ? leftIndex : -1;
+            // если искомый элемент является целевым, возвращаем его индекс, иначе null
+            return item === array[leftIndex] ? leftIndex : null;
         }
 
         const middleIndex = Math.floor((leftIndex + rightIndex) / 2);
@@ -39,7 +34,7 @@ const binaryRec = (array: Array<T>, item: T): number => {
  * 
  * Реализация циклом
  */
-const binary = (array: Array<T>, item: T): number => {
+const binarySearch = <T>(array: Array<T>, item: T): number | null => {
     let leftIndex = 0;
     let rightIndex = array.length - 1;
 
@@ -59,25 +54,7 @@ const binary = (array: Array<T>, item: T): number => {
         }
     }
 
-    return -1;
+    return null;
 };
 
-const arr1 = [1, 2, 3, 8, 9, 12, 13, 14, 19, 20, 53];
-
-assert(isEqual(binaryRec(arr1, 13), 6));
-assert(isEqual(binaryRec(arr1, 3), 2));
-assert(isEqual(binaryRec(arr1, 1), 0));
-assert(isEqual(binaryRec(arr1, 20), 9));
-assert(isEqual(binaryRec(arr1, 53), 10));
-assert(isEqual(binaryRec(arr1, 42), -1));
-
-assert(isEqual(binary(arr1, 13), 6));
-assert(isEqual(binary(arr1, 3), 2));
-assert(isEqual(binary(arr1, 1), 0));
-assert(isEqual(binary(arr1, 20), 9));
-assert(isEqual(binary(arr1, 53), 10));
-assert(isEqual(binary(arr1, 42), -1));
-
-console.log('done');
-
-export { };
+export { binarySearchRecursive, binarySearch };

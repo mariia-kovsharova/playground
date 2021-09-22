@@ -1,12 +1,25 @@
-// Упрощенная реализая промисов - для лучшего понимания, как они работают "под капотом"
 
+/**
+ * Упрощенная реализая промисов - для лучшего понимания, как они работают "под капотом".
+ * 
+ * Promise - это конечный автомат, который может принимать одно из состояний:
+ *  PENDING - состояние "ожидание результата"
+ *  FULFILLED - состояние "завершился успешно"
+ *  REJECTED - состояние "завершился с ошибкой"
+ * 
+ * Состояния FULFILLED и REJECTED - конечные.
+ * 
+ * Всего возможно 2 перехода в конечное состояние:
+ *  PENDING -> FULFILLED
+ *  PENDING -> REJECTED
+ */
 enum STATES {
     PENDING = 'PENDING',
     FULFILLED = 'FULFILLED',
     REJECTED = 'REJECTED',
 };
 
-// счетчик для отладки
+// Счетчик для отладки
 let counter = 1;
 
 type NonNull<T> = T extends null ? never : T;
@@ -121,11 +134,13 @@ class CustomPromise<T = any> {
                 nextResolve(rejectedResult);
             }
 
+            // TODO: проверь тут описание
             if (this.PromiseState === STATES.FULFILLED) {
                 // если промис уже зарезолвен, тогда НОВЫЙ промис просто РЕЗОЛВИМ с текущим готовым результатом
                 // можно вызвать onFullfillHandler с текущим результатом, но так просто понятней
                 // и все это на следующий тик
                 setTimeout(() => nextResolve(onFulfill(this.PromiseResult as NonNull<T>)), 0);
+                return;
             }
 
             if (this.PromiseState === STATES.REJECTED) {
@@ -133,6 +148,7 @@ class CustomPromise<T = any> {
                 // пропущенным через обработчик ошибки (onRejectedHandler). Причина считается ОБРАБОТАННОЙ
                 // и все это на следующий тик
                 setTimeout(() => nextResolve(onReject(this.PromiseResult as NonNull<T>)), 0);
+                return;
             }
 
             // в ТЕКУЩИЙ промис добавляем новый обработчик на успешное выполнение
@@ -146,98 +162,4 @@ class CustomPromise<T = any> {
     }
 }
 
-// TODO: как типизировать промис в зависимости от параметра в resolve?
-const test = async () => {
-    const promise = new CustomPromise((resolve) => {
-        resolve('Hello, world!');
-    });
-
-    promise
-        .then((value) => {
-            console.log(value); // 'Hello, world!'
-        })
-        .then((value) => {
-            console.log(value); // undefined
-        })
-
-    const result = await promise
-        .then((value) => value?.replace('Hello', 'Goodbye'))
-        .then((value) => value?.toUpperCase());
-
-    console.log(result);
-}
-
-const test2 = async () => {
-    const firstFulfillMessage = 'First Fulfilled';
-    const secondFulfillMessage = 'Second Fulfilled';
-
-    const resolveMessage = 'Resolved';
-
-    const messages: string[] = [];
-    const messages2: string[] = [];
-
-    const resolvedPromise = new CustomPromise<string>((resolve) => {
-        resolve(resolveMessage);
-    });
-
-    console.log('step 1');
-    console.log(messages);
-    console.log(messages2);
-
-    // eslint-disable-next-line jest/valid-expect-in-promise
-    const modifiedPromise = resolvedPromise
-        .then((message?: string): void => {
-            if (message) {
-                messages.push(message);
-            }
-            messages.push(firstFulfillMessage);
-        });
-
-    const modifiedPromise2 = resolvedPromise
-        .then((message?: string): void => {
-            if (message) {
-                messages.push(message);
-            }
-            messages2.push(secondFulfillMessage);
-        });
-
-    console.log('step 2');
-    console.log(messages);
-    console.log(messages2);
-
-    await modifiedPromise
-        .then(() => {
-            messages.push('I am last');
-        });
-
-    await modifiedPromise2
-        .then(() => {
-            messages2.push('I am last for second');
-        });
-
-    console.log('step 3');
-    console.log(messages);
-    console.log(messages2);
-};
-
-const rejectTest = async () => {
-    const resolveMessage = 'Resolved';
-    const rejectMessage = 'Ooops!';
-
-    const rejectedPromise = new CustomPromise<string>((resolve, reject) => {
-        reject(rejectMessage);
-        resolve(resolveMessage);
-    });
-
-    await rejectedPromise.then(
-        (value?: string) => {
-            console.log('I should have never been called');
-        },
-        (err: any) => {
-            console.error(err);
-        });
-};
-
-test();
-
-export { };
+export { CustomPromise };

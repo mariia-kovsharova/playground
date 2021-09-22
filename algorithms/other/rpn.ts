@@ -1,5 +1,5 @@
 import assert from 'assert';
-import { Stack } from '../data-structures/stack';
+import { Stack } from '../data-structures/stack/stack';
 
 /**
  * Обратная польская нотация
@@ -93,7 +93,7 @@ const format = (sequence: string): string => {
                 continue;
             }
 
-            const currentTop = operations.top();
+            const currentTop = operations.peek();
 
             // Скобки служат исключительно маркером области текущего 
             // выражения, с ними не должны сравнивать
@@ -156,7 +156,7 @@ const calculate = (sequence: string): number | never => {
         stack.push(result);
     }
 
-    if (stack.size() !== 1) {
+    if (stack.size !== 1) {
         throw new Error(`Invalid stack: "${stack.print()}"`);
     }
 

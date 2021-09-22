@@ -5,16 +5,16 @@ export class Stack<T = any> {
         this.stack = <Array<T>>[];
     }
 
+    get size(): number {
+        return this.stack.length;
+    }
+
     public clear(): void {
         this.stack = <Array<T>>[];
     }
 
     public isEmpty(): boolean {
         return this.stack.length === 0;
-    }
-
-    public size(): number {
-        return this.stack.length;
     }
 
     public push(value: T): void {
@@ -30,12 +30,12 @@ export class Stack<T = any> {
         return item!;
     }
 
-    public top(): T | never {
+    public peek(): T | never {
         if (this.isEmpty()) {
             throw new Error('Can not get top from empty stack')
         }
 
-        return this.stack[this.size() - 1];
+        return this.stack[this.size - 1];
     }
 
     public print(): string {

@@ -1,5 +1,4 @@
-import assert from 'assert';
-import { rejectPromise, resolvePromise } from '../../utils';
+export { };
 
 /**
  * Реализация Promise.first
@@ -77,78 +76,3 @@ if (!Promise.firstAsyncAwait) {
         })
     }
 }
-
-const test = () => {
-    const resolvingReasons = [1, 2, 3];
-    const timeouts = [null, 5000, 400];
-
-    const resolvedPromises = resolvingReasons.map((reason, index) => {
-        const timeout = timeouts[index];
-        if (timeout) {
-            return resolvePromise(reason, timeout);
-        }
-        return resolvePromise(reason);
-    })
-
-    const one = Promise.first(resolvedPromises);
-
-    one
-        .then(value => {
-            console.log('ONE PROMISE FULFILLED');
-            console.log(value);
-            assert(value === 3);
-
-        }).catch(error => {
-            console.log('ONE PROMISE REJECTED');
-            console.log(error);
-        });
-
-    const two = Promise.first([
-        ...resolvedPromises,
-        resolvePromise(9999, 100)
-    ]);
-
-    two
-        .then(value => {
-            console.log('TWO PROMISE FULFILLED');
-            console.log(value);
-
-            assert(value === 9999);
-        }).catch(error => {
-            console.log('TWO PROMISE REJECTED');
-            console.log(error);
-        });
-
-    const three = Promise.first([
-        rejectPromise(12345)
-    ]);
-
-    three
-        .then(reasons => {
-            console.log('THREE PROMISE FULFILLED');
-            console.log(reasons);
-        }).catch(errors => {
-            console.log('THREE PROMISE REJECTED');
-            console.log(errors);
-        });
-
-    const four = Promise.first<number | string | boolean>([
-        rejectPromise(12345),
-        rejectPromise(1),
-        rejectPromise('foo'),
-        rejectPromise(true)
-    ]);
-
-    four
-        .then(reasons => {
-            console.log('FOUR PROMISE FULFILLED');
-            console.log(reasons);
-        }).catch(errors => {
-            console.log('FOUR PROMISE REJECTED');
-            console.log(errors);
-        });
-}
-
-test();
-
-export { };

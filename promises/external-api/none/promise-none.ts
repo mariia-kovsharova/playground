@@ -1,5 +1,4 @@
-import assert from 'assert';
-import { rejectPromise, resolvePromise } from '../../utils';
+export { };
 
 /**
  * Реализация Promise.none - это Promise.all наоборот - если все промисы rejected,
@@ -22,6 +21,9 @@ if (!Promise.none) {
     Promise.none = function <T>(promises: Array<Promise<T> | PromiseLike<T>>) {
         // Создаем главный промис, который и будет результатом функции
         return new Promise((resolve, reject) => {
+            const lenght = promises.length;
+            let rejectedPromisesCount = 0;
+
             // Промис-результат обхода всех промисов-параметров
             const reducePromise = promises.reduce(
                 (accumulator: Promise<any>, promise: Promise<T> | PromiseLike<T>) => {
@@ -35,24 +37,32 @@ if (!Promise.none) {
                             // Если какой-то из промисов успешно завершился,
                             // можем сразу отклонить ГЛАВНЫЙ ПРОМИС
                             reject(result);
+
+                            // Однако, вернуть аккумулятор необходимо, чтобы не сломать
+                            // УЖЕ существующий аккумулятор (т.к. вместо него иначе вернется undefined)
+                            return accumulator;
                         })
                         .catch(reason => {
                             /**
                             * Иначе выполняются следующие шаги:
                             * 1) полученный аккумулятор является промисом, получаем текущие значения
                             * аккумулятора через then
-                            * 2) возвращаем новый промис, который резолвится новым аккумулятором,
+                            * 2) возвращаем новый промис-аккумулятор, который резолвится новым аккумулятором,
                             * а именно "предыдущие ошибки и текущая ошибка"
                             */
-                            return accumulator
-                                .then(previousReasons => [...previousReasons, reason]);
+                            rejectedPromisesCount += 1;
+                            return accumulator.then(previousReasons => [...previousReasons, reason]);
                         });
                 },
                 Promise.resolve(<any>[])
             );
 
             reducePromise.then(reasons => {
-                resolve(reasons);
+                // Резолвим главный промис только в случае,
+                // если ВСЕ промисы были отклонены
+                if (rejectedPromisesCount === lenght) {
+                    resolve(reasons);
+                }
             });
         });
     }
@@ -95,61 +105,3 @@ if (!Promise.noneAsyncAwait) {
         });
     }
 }
-
-const test = () => {
-    const rejectionReasons = [1, 2, 3];
-    const rejectionTimeouts = [null, 5000, 400];
-
-    const rejectionPromises = rejectionReasons.map((reason, index) => {
-        const timeout = rejectionTimeouts[index];
-        if (timeout) {
-            return rejectPromise(reason, timeout);
-        }
-        return rejectPromise(reason);
-    })
-
-    const one = Promise.none(rejectionPromises);
-
-    one
-        .then(reasons => {
-            console.log('ONE PROMISE FULFILLED');
-            console.log(reasons);
-            reasons.forEach((reason, index) => {
-                assert(reason === rejectionReasons[index]);
-            })
-        }).catch(error => {
-            console.log('ONE PROMISE REJECTED');
-            console.log(error);
-        });
-
-    const two = Promise.none([
-        ...rejectionPromises,
-        resolvePromise(9999, 100)
-    ]);
-
-    two
-        .then(reasons => {
-            console.log('TWO PROMISE FULFILLED');
-            console.log(reasons);
-        }).catch(error => {
-            console.log('TWO PROMISE REJECTED');
-            console.log(error);
-        });
-
-    const three = Promise.noneAsyncAwait([
-        resolvePromise(12345)
-    ]);
-
-    three
-        .then(reasons => {
-            console.log('THREE PROMISE FULFILLED');
-            console.log(reasons);
-        }).catch(error => {
-            console.log('THREE PROMISE REJECTED');
-            console.log(error);
-        });
-}
-
-test();
-
-export { }

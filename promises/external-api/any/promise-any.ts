@@ -1,5 +1,4 @@
-import assert from 'assert';
-import { resolvePromise } from '../../utils';
+export { };
 
 /**
  * Реализация Promise.any 
@@ -25,7 +24,6 @@ type Reasons = Array<any>;
 type Accumulator<T> = [Values<T>, Reasons];
 
 if (!Promise.my_any) {
-
     Promise.my_any = function <T>(promises: Array<Promise<T> | PromiseLike<T>>) {
         return new Promise((resolve, reject) => {
             // const accInit: Accumulator<T> = [<Values<T>>[], <Reasons>[]];
@@ -41,7 +39,7 @@ if (!Promise.my_any) {
                                 return [...previousValues, value];
                             })
                         })
-                        .catch(reason => {
+                        .catch(_reason => {
                             return acc;
                         })
                 },
@@ -59,33 +57,3 @@ if (!Promise.my_any) {
         });
     }
 }
-
-const test = () => {
-    const resolvingReasons = [1, 2, 3];
-    const timeouts = [null, 5000, 400];
-
-    const resolvedPromises = resolvingReasons.map((reason, index) => {
-        const timeout = timeouts[index];
-        if (timeout) {
-            return resolvePromise(reason, timeout);
-        }
-        return resolvePromise(reason);
-    })
-
-    const one = Promise.my_any(resolvedPromises);
-
-    one
-        .then(value => {
-            console.log('ONE PROMISE FULFILLED');
-            console.log(value);
-            // assert(value === 2);
-
-        }).catch(error => {
-            console.log('ONE PROMISE REJECTED');
-            // console.log(error);
-        });
-}
-
-test();
-
-export { }

@@ -134,11 +134,9 @@ class CustomPromise<T = any> {
                 nextResolve(rejectedResult);
             }
 
-            // TODO: проверь тут описание
             if (this.PromiseState === STATES.FULFILLED) {
-                // если промис уже зарезолвен, тогда НОВЫЙ промис просто РЕЗОЛВИМ с текущим готовым результатом
-                // можно вызвать onFullfillHandler с текущим результатом, но так просто понятней
-                // и все это на следующий тик
+                // Если промис уже зарезолвлен, тогда в resolve нового промиса просто поступает
+                // значение текущего, обработанное обработчиком onFulfill
                 setTimeout(() => nextResolve(onFulfill(this.PromiseResult as NonNull<T>)), 0);
                 return;
             }

@@ -1,12 +1,11 @@
-import assert from 'assert';
-import { rejectPromise, resolvePromise } from '../../utils';
+export { };
 
 /**
  * Реализация Promise.last
  * 
  * Принимает на вход массив промисов
  * Если хотя бы один завершается успешно, возвращает fulfilled-промис, содержащий значение последнего разрешенного промиса
- * Если ни одного не завершается успешно, вовзвращает rejected-промис, содержащий массив причин?
+ * Если ни одного не завершается успешно, вовзвращает rejected-промис, содержащий массив причин
  */
 
 declare global {
@@ -19,8 +18,12 @@ declare global {
 if (!Promise.last) {
     Promise.last = function <T>(promises: Array<Promise<T> | PromiseLike<T>>) {
         return new Promise<T>((resolve, reject) => {
+            const lenght = promises.length;
 
             let resolvedPromisesCount = 0;
+            let rejectedPromisesCount = 0;
+
+            let lastFulfilledValue: T;
 
             const reasonsReducePromise = promises.reduce(
                 (acc: Promise<any>, promise: Promise<T> | PromiseLike<T>) => {
@@ -30,11 +33,14 @@ if (!Promise.last) {
                         // Последний промис, который зарезолвится,
                         // зарезолвит главный промис своим значением
                         .then(value => {
-                            console.log(`value: ${value}, count: ${resolvedPromisesCount}`);
-
                             resolvedPromisesCount += 1;
-                            if (resolvedPromisesCount === promises.length) {
+
+                            const processedPromisesCount = resolvedPromisesCount + rejectedPromisesCount;
+
+                            if (processedPromisesCount === promises.length) {
                                 resolve(value);
+                            } else {
+                                lastFulfilledValue = value;
                             }
                             /**
                              * ОЧЕНЬ ВАЖНО ЗДЕСЬ СВЯЗАТЬ аккумулятор
@@ -71,9 +77,13 @@ if (!Promise.last) {
                         })
                         // Иначе - в аккумулятор добавляется новая причина отклонения промиса
                         .catch(reason => {
-                            console.log(`reason: ${reason}, count: ${resolvedPromisesCount}`);
+                            rejectedPromisesCount += 1;
 
-                            resolvedPromisesCount += 1;
+                            const processedPromisesCount = resolvedPromisesCount + rejectedPromisesCount;
+
+                            if (processedPromisesCount === lenght) {
+                                resolve(lastFulfilledValue);
+                            }
 
                             return acc.then(previousReasons => {
                                 // Создается новый промис, который резолвится обновленным значением
@@ -85,11 +95,18 @@ if (!Promise.last) {
             );
 
             reasonsReducePromise.then(reasons => {
-                // Получаем от промиса-аккумулятора причины и реджектим ГЛАВНЫЙ промис
-                // значениями причин
-
-                console.log('all promises have been !');
-                reject(reasons);
+                /**
+                 * Получаем от промиса-аккумулятора причины и реджектим ГЛАВНЫЙ промис 
+                 * значениями причин
+                 * 
+                 * !!! ВАЖНО здесь тоже добавить проверку на то, что все промисы из начального
+                 * массива промисов обработаны - иначе получим кейс, когда был возвращен
+                 * массив с причинами зареджектенных промисов, которые были зарезолвлены
+                 * раньше, чем успешно завершился хотя бы один промис !!!
+                */
+                if (rejectedPromisesCount === promises.length) {
+                    reject(reasons);
+                }
             });
         })
     }
@@ -99,8 +116,12 @@ if (!Promise.lastAsyncAwait) {
     //  Вариант на async/await для более простого понимания, что происходит
     Promise.lastAsyncAwait = function <T>(promises: Array<Promise<T> | PromiseLike<T>>) {
         return new Promise<T>((resolve, reject) => {
+            const lenght = promises.length;
 
             let resolvedPromisesCount = 0;
+            let rejectedPromisesCount = 0;
+
+            let lastFulfilledValue: T;
 
             const reasonsReducePromise = promises.reduce(
                 async (acc: Promise<any>, promise: Promise<T> | PromiseLike<T>) => {
@@ -109,12 +130,24 @@ if (!Promise.lastAsyncAwait) {
                     try {
                         const value = await Promise.resolve(promise);
                         resolvedPromisesCount += 1;
-                        if (resolvedPromisesCount === promises.length) {
+
+                        const processedPromisesCount = resolvedPromisesCount + rejectedPromisesCount;
+
+                        if (processedPromisesCount === length) {
                             resolve(value);
+                        } else {
+                            lastFulfilledValue = value;
                         }
+
                         return await acc;
                     } catch (reason) {
-                        resolvedPromisesCount += 1;
+                        rejectedPromisesCount += 1;
+                        const processedPromisesCount = resolvedPromisesCount + rejectedPromisesCount;
+
+                        if (processedPromisesCount === lenght) {
+                            resolve(lastFulfilledValue);
+                        }
+
                         const previousReasons = await acc;
                         return [...previousReasons, reason];
                     }
@@ -123,41 +156,19 @@ if (!Promise.lastAsyncAwait) {
             );
 
             reasonsReducePromise.then(reasons => {
-                // Получаем от промиса-аккумулятора причины и реджектим ГЛАВНЫЙ промис
-                // значениями причин
-                reject(reasons);
+                /**
+                  * Получаем от промиса-аккумулятора причины и реджектим ГЛАВНЫЙ промис 
+                  * значениями причин
+                  * 
+                  * !!! ВАЖНО здесь тоже добавить проверку на то, что все промисы из начального
+                  * массива промисов обработаны - иначе получим кейс, когда был возвращен
+                  * массив с причинами зареджектенных промисов, которые были зарезолвлены
+                  * раньше, чем успешно завершился хотя бы один промис !!!
+                 */
+                if (rejectedPromisesCount === promises.length) {
+                    reject(reasons);
+                }
             });
         })
     }
 }
-
-const test = () => {
-    const resolvingReasons = [1, 2, 3];
-    const timeouts = [null, 5000, 400];
-
-    const resolvedPromises = resolvingReasons.map((reason, index) => {
-        const timeout = timeouts[index];
-        if (timeout) {
-            return resolvePromise(reason, timeout);
-        }
-        return resolvePromise(reason);
-    })
-
-    const one = Promise.last(resolvedPromises);
-
-    one
-        .then(value => {
-            console.log('ONE PROMISE FULFILLED');
-            console.log(value);
-            assert(value === 2);
-
-        }).catch(error => {
-            console.log('ONE PROMISE REJECTED');
-            console.log(error);
-        });
-
-}
-
-test();
-
-export { };

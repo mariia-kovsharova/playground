@@ -1,16 +1,16 @@
-const resolvePromise = <T>(value: T, timeout = 3000): Promise<T> => {
+const resolvePromise = <T>(value: T, timeout?: number | null): Promise<T> => {
     return new Promise((resolve) => {
         setTimeout(() => {
             resolve(value);
-        }, timeout);
+        }, timeout ?? 100);
     })
 };
 
-const rejectPromise = <T>(reason: T, timeout = 3000): Promise<T> => {
+const rejectPromise = <T>(reason: T, timeout?: number | null): Promise<T> => {
     return new Promise((_resolve, reject) => {
         setTimeout(() => {
             reject(reason);
-        }, timeout);
+        }, timeout ?? 100);
     })
 };
 

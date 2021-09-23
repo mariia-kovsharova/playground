@@ -84,13 +84,17 @@ describe('LinkedList', () => {
         list.append(1);
         list.append(2);
 
+        expect(list.size).toBe(2);
+
         const head2 = list.deleteHead();
 
         expect(head2).toBe(1);
+        expect(list.size).toBe(1);
 
         const head3 = list.deleteHead();
 
         expect(head3).toBe(2);
+        expect(list.size).toBe(0);
 
         const head4 = list.deleteHead();
 
@@ -105,11 +109,15 @@ describe('LinkedList', () => {
         list.append(1);
         list.append(2);
 
+        expect(list.size).toBe(2);
+
         const tail2 = list.deleteTail();
 
         expect(tail2).toBe(2);
+        expect(list.size).toBe(1);
 
         const tail3 = list.deleteTail();
+        expect(list.size).toBe(0);
 
         expect(tail3).toBe(1);
 
@@ -141,5 +149,46 @@ describe('LinkedList', () => {
 
         expect(list.toString()).toBe('5,4,3,2,1');
         expect(list.size).toBe(5);
+    });
+
+    test('clear', () => {
+        expect(list.size).toBe(0);
+        expect(list.toString()).toBe('');
+
+        list.append(0);
+        list.append(2);
+        list.append(12);
+
+        expect(list.size).toBe(3);
+        expect(list.toString()).toBe('0,2,12');
+
+        list.clear();
+
+        expect(list.size).toBe(0);
+        expect(list.toString()).toBe('');
+    });
+
+    test('getHead', () => {
+        expect(list.getHead()).toBeNull();
+
+        list.append(2);
+
+        expect(list.getHead()).toBe(2);
+
+        list.append(8);
+
+        expect(list.getHead()).toBe(2);
+    });
+
+    test('getTail', () => {
+        expect(list.getTail()).toBeNull();
+
+        list.append(2);
+
+        expect(list.getTail()).toBe(2);
+
+        list.append(8);
+
+        expect(list.getTail()).toBe(8);
     });
 });

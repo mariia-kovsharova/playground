@@ -154,10 +154,12 @@ class LinkedList<T = any> {
 
         if (this.head === this.tail) {
             this.head = this.tail = null;
+            this._size = 0;
             return value;
         }
 
         this.head = this.head.next;
+        this._size -= 1;
 
         return value;
     }
@@ -175,6 +177,7 @@ class LinkedList<T = any> {
 
         if (this.head === this.tail) {
             this.head = this.tail = null;
+            this._size = 0;
             return value;
         }
 
@@ -185,6 +188,7 @@ class LinkedList<T = any> {
         }
 
         this.tail = beforeNode;
+        this._size -= 1;
 
         return value;
     }
@@ -261,6 +265,26 @@ class LinkedList<T = any> {
         }
 
         [this.head, this.tail] = [this.tail, this.head];
+    }
+
+    /**
+     * Удаляет элементы из связанного списка
+     */
+    public clear(): void {
+        if (!this.head || !this.tail) {
+            return;
+        }
+
+        this.head = this.tail = null;
+        this._size = 0;
+    }
+
+    public getHead(): T | null {
+        return this.head?.value ?? null;
+    }
+
+    public getTail(): T | null {
+        return this.tail?.value ?? null;
     }
 
     private validate(): void | never {

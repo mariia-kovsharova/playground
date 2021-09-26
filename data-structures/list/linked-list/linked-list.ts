@@ -27,7 +27,7 @@ class LinkedList<T = any> {
         this.fromArray(items);
     }
 
-    get size(): number {
+    public get size(): number {
         return this._size;
     }
 
@@ -35,7 +35,7 @@ class LinkedList<T = any> {
      * 
      * @param value значения для узла, который помещается в начало списка
      */
-    prepend(value: T): LinkedList<T> {
+    public prepend(value: T): LinkedList<T> {
         const node = new Node(value);
 
         if (!this.head || !this.tail) {
@@ -61,7 +61,7 @@ class LinkedList<T = any> {
      * @param index - позиция, на которую надо вставлять элемент.
      * Если индекс не указан, элемент просто добавляется в конец списка
      */
-    append(value: T, index?: number): LinkedList<T> {
+    public append(value: T, index?: number): LinkedList<T> {
         const node = new Node(value);
 
         if (!this.head || !this.tail) {
@@ -100,7 +100,7 @@ class LinkedList<T = any> {
      * 
      * @param value значение, узлы с которым необходимо удалить
      */
-    delete(value: T): void {
+    public delete(value: T): void {
         if (!this.head || !this.tail) {
             return;
         }
@@ -145,7 +145,7 @@ class LinkedList<T = any> {
      * Удаляет головной узел в списке
      * @returns значение удаленного узла или null, если такого узла нет
      */
-    deleteHead(): T | null {
+    public deleteHead(): T | null {
         if (!this.head) {
             return null;
         }
@@ -168,7 +168,7 @@ class LinkedList<T = any> {
      * Удаляет хвостовой узел в списке
      * @returns значение удаленного узла или null, если такого узла нет
      */
-    deleteTail(): T | null {
+    public deleteTail(): T | null {
         if (!this.head || !this.tail) {
             return null;
         }
@@ -197,7 +197,7 @@ class LinkedList<T = any> {
      * 
      * @returns массив со значениями всех узлов по очереди
      */
-    toArray(): ReadonlyArray<T> {
+    public toArray(): ReadonlyArray<T> {
         const result: Array<T> = [];
         let currentNode: Node<T> | null = this.head;
 
@@ -215,7 +215,7 @@ class LinkedList<T = any> {
      * в текущий список
      * @returns связанный список типа Т
      */
-    fromArray(items?: Iterable<T>): LinkedList {
+    public fromArray(items?: Iterable<T>): LinkedList {
         if (items) {
             for (const value of items) {
                 this.append(value);
@@ -230,7 +230,7 @@ class LinkedList<T = any> {
      * @returns строковое представление значений узлов в том порядке,
      * в котором они расположены в связанном списке
      */
-    toString(): string {
+    public toString(): string {
         return this.toArray().join(LinkedList.Separator);
     }
 
@@ -240,7 +240,7 @@ class LinkedList<T = any> {
      * Узлы меняют направление
      * 
      */
-    reverse(): void {
+    public reverse(): void {
         if (!this.head || !this.tail || this.head === this.tail) {
             return;
         }
@@ -285,6 +285,14 @@ class LinkedList<T = any> {
 
     public getTail(): T | null {
         return this.tail?.value ?? null;
+    }
+
+    public *[Symbol.iterator]() {
+        let node: Node<T> | null = this.head;
+        while (node) {
+            yield node.value;
+            node = node.next;
+        }
     }
 
     private validate(): void | never {

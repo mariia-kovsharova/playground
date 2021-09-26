@@ -1,4 +1,4 @@
-import { LinkedList } from '../../list/linked-list/linked-list';
+import { LinkedList } from '../list/linked-list/linked-list';
 
 /**
  * Если очередь реализована на связном списке,
@@ -21,7 +21,7 @@ class Queue<T> {
     }
 
     public enqueue(value: T): void {
-        if (this.maxSize && this.queue.size > this.maxSize) {
+        if (this.maxSize && this.queue.size >= this.maxSize) {
             return;
         }
 

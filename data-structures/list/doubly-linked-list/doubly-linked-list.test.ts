@@ -143,4 +143,15 @@ describe('DoublyLinkedList', () => {
         expect(list.size).toBe(5);
     });
 
+    test('iterable list', () => {
+        list.append(7).append(23).append(13).append(8).append(1);
+        const result: number[] = [];
+
+        for (const item of list) {
+            result.push(item);
+        }
+
+        expect(result).toEqual([7, 23, 13, 8, 1]);
+    });
+
 });

@@ -11,7 +11,7 @@ class Node<T = any> {
         this.previous = previous;
     }
 
-    toString(): string {
+    public toString(): string {
         return String(this.value);
     }
 }
@@ -31,7 +31,7 @@ class DoublyLinkedList<T = any> {
         this.fromArray(items);
     }
 
-    get size(): number {
+    public get size(): number {
         return this._size;
     }
 
@@ -39,7 +39,7 @@ class DoublyLinkedList<T = any> {
      * 
      * @param value значения для узла, который помещается в начало списка
      */
-    prepend(value: T): DoublyLinkedList<T> {
+    public prepend(value: T): DoublyLinkedList<T> {
         const node = new Node(value);
 
         if (!this.head || !this.tail) {
@@ -67,7 +67,7 @@ class DoublyLinkedList<T = any> {
      * @param index - позиция, на которую надо вставлять элемент.
      * Если индекс не указан, элемент просто добавляется в конец списка
      */
-    append(value: T, index?: number): DoublyLinkedList<T> {
+    public append(value: T, index?: number): DoublyLinkedList<T> {
         const node = new Node(value);
 
         if (!this.head || !this.tail) {
@@ -110,7 +110,7 @@ class DoublyLinkedList<T = any> {
      * 
      * @param value значение, узлы с которым необходимо удалить
      */
-    delete(value: T): void {
+    public delete(value: T): void {
         if (!this.head || !this.tail) {
             return;
         }
@@ -155,7 +155,7 @@ class DoublyLinkedList<T = any> {
      * Удаляет головной узел в списке
      * @returns значение удаленного узла или null, если такого узла нет
      */
-    deleteHead(): T | null {
+    public deleteHead(): T | null {
         if (!this.head) {
             return null;
         }
@@ -177,7 +177,7 @@ class DoublyLinkedList<T = any> {
      * Удаляет хвостовой узел в списке
      * @returns значение удаленного узла или null, если такого узла нет
      */
-    deleteTail(): T | null {
+    public deleteTail(): T | null {
         if (!this.tail) {
             return null;
         }
@@ -199,7 +199,7 @@ class DoublyLinkedList<T = any> {
      * 
      * @returns массив со значениями всех узлов по очереди
      */
-    toArray(): ReadonlyArray<T> {
+    public toArray(): ReadonlyArray<T> {
         const result: Array<T> = [];
         let currentNode: Node<T> | null = this.head;
 
@@ -217,7 +217,7 @@ class DoublyLinkedList<T = any> {
      * в текущий список
      * @returns связанный список типа Т
      */
-    fromArray(items?: Iterable<T>): DoublyLinkedList {
+    public fromArray(items?: Iterable<T>): DoublyLinkedList {
         if (items) {
             for (const value of items) {
                 this.append(value);
@@ -232,7 +232,7 @@ class DoublyLinkedList<T = any> {
      * @returns строковое представление значений узлов в том порядке,
      * в котором они расположены в связанном списке
      */
-    toString(): string {
+    public toString(): string {
         return this.toArray().join(DoublyLinkedList.Separator);
     }
 
@@ -241,7 +241,7 @@ class DoublyLinkedList<T = any> {
      * Разворачивает список - головной элемент становится хвостовым, и наоборот.
      * Элементы между головными меняют ссылки на next и previous узлы
      */
-    reverse(): void {
+    public reverse(): void {
         if (!this.head || !this.tail || this.head === this.tail) {
             return;
         }
@@ -266,6 +266,14 @@ class DoublyLinkedList<T = any> {
 
         this.tail.next = null;
         this.tail.previous = next;
+    }
+
+    public *[Symbol.iterator]() {
+        let node: Node<T> | null = this.head;
+        while (node) {
+            yield node.value;
+            node = node.next;
+        }
     }
 }
 

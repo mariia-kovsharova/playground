@@ -25,6 +25,13 @@ const transformedCollection = <string[]>collection
  * Цель transducers - избежать немедленного создания коллекции (произвести вычисления без промежуточных коллекций).
  * Технически это составная "сужаемая" функция высшего порядка
  * (transducer is a composable higher order reducer function)
+ * 
+ * Пример обычного редьюсера (палочка это элемент коллекции)
+ * [|] > [|] > [|] > [|]
+ * 
+ * Пример трансдьюсера
+ * 
+ * [|] > > > [|]
  *
  * Есть два варианта реализовать трансдьюсеры:
  * 1) Push - жадное выполнение
@@ -49,24 +56,82 @@ const transformedCollection = <string[]>collection
  * Реализация Push-transducer
  * */
 
-// map = transformFn => step => reducer
+/**
+ * map и filter можно реализовать через reduce
+ * 
+ * Рассмотрим пример прибавления единицы через reduce
+ * tMapReducer = (acc, item) => acc.concat(item + 1);
+ * 
+ * [1, 2, 3].reduce(tMapReducer, []); // [2, 3, 4];
+ * 
+ * Функцию преобразования можно вынести наружу, получим следующую структуру:
+ * tMap = transformFn => (acc, item) => acc.concat(transformFn(item));
+ * 
+ * [1, 2, 3, 4, 5].reduce(tMap((x) => x + 1), []); // [2, 3, 4];
+ * 
+ * Аналогично с фильтром
+ * tFilter = predicateFn => (acc, item) => predicateFn(item) ? acc.concat(item) : acc;
+ * 
+ * [1, 2, 3, 4, 5].reduce(tFilter((x) => x % 2 === 0), []); // [2, 4];
+ * 
+ * Заметим, что и map, и фильтр используются reduce, чтобы указать, КАК обрабатывать элементы коллекции
+ *  
+ * [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+ *      .reduce(tMap(x => x + 1), [])
+ *      .reduce(tFilter(x => x % 2 === 0), []);
+ * 
+ * Рассмотрим еще раз вместе:
+ * 
+ * tMap = transformFn => (acc, item) => acc.concat(transformFn(item));
+ * tFilter = predicateFn => (acc, item) => predicateFn(item) ? acc.concat(item) : acc;
+ * 
+ * И tMap, и tFilter используют acc.concat в качестве reducing function
+ * 
+ * Вынесем reducing function наружу
+ * 
+ * const mapping = transformFn => reducingFn => (acc, item) => reducingFn(acc, transformFn(item));
+ * const filtering = predicateFn => reducingFn => (acc, item) => predicateFn(item) ? reducingFn(acc, item) : acc;
+ * 
+ * Получается процесс такой (на примере map):
+ * поступивший элемент преобразовывается и вместе с текущим аккумулятором передается в reducing function как параметры 
+ * 
+ * [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+ *   .reduce(mapping(x => x + 1)((acc, item) => acc.concat(item)), [])
+ *   .reduce(filtering(x => x % 2 === 0)((acc, item) => acc.concat(item)), []); // [2, 4, 6, 8, 10]
+ * 
+ * ПРИМЕЧАНИЕ:
+ * т.к. array.concat создает каждый раз новый массив, думаю,
+ * куда больший смысл будет иметь мутирование аккумулятора (acc.push(item); return acc)
+ * 
+ * 
+ * Далее, чтобы не использовать reduce на каждый шаг, мы сделаем так, чтобы ВНУТРИ одного
+ * reduce функция ИЗМЕНЯЛАСЬ 
+ * 
+ * Т.к. каждый трансдьюсер берет reducingFn и возвращает reducingFn, мы можем компонавать их вместе,
+ * используя композицию: compose(f, g, k) это f(g(k(x)))
+ * 
+ * Например, filter берет редьюсер и вставляет перед ним проверку на предикат
+ * А map берет редьюсер, но перед тем, как засунуть в него аккумулятор и элемент, преобразовывает элемент 
+ */
+
+// map = transformFn => reducing function => reducer
 const map =
     <T, R = T>(transformFn: (i: T) => R) =>
-        (stepFn: (acc: R[], i: R) => R[]) =>
+        (reducingFn: (acc: R[], i: R) => R[]) =>
             (acc: R[], currentItem: T): R[] => {
                 const transformedValue = transformFn(currentItem);
-                return stepFn(acc, transformedValue);
+                return reducingFn(acc, transformedValue);
             };
 
-// filter = predicate => step => reducer
+// filter = predicate => reducing function => reducer
 const filter =
     <T>(predicateFn: (i: T) => boolean) =>
-        (stepFn: (acc: T[], i: T) => T[]) =>
+        (reducingFn: (acc: T[], i: T) => T[]) =>
             (acc: T[], currentItem: T): T[] => {
                 // Если текущий итем подходит по предикату, он идет по "трубе" обработчиков дальше
                 const isPassedPredicate = predicateFn(currentItem);
                 if (isPassedPredicate) {
-                    return stepFn(acc, currentItem);
+                    return reducingFn(acc, currentItem);
                 }
                 // Если не подходит, возвращается просто аккумулятор
                 return acc;
@@ -74,21 +139,25 @@ const filter =
 
 const pipe =
     <T, R = T>(...steps) =>
-        // pipe принимает сначала набор функций-шагов, которые должно пройти значение,
-        // затем функцию, которая управляет поведением значения, полученного в результате прохода всех обработчиков
-        // (т.е. "описывает", как именно дальше работать с полученным значением).
+        /**
+         * pipe принимает сначала набор функций-шагов, которые должно пройти значение,
+         * затем функцию, которая управляет поведением значения, полученного в результате прохода всех обработчиков
+         * (т.е. "описывает", как именно дальше работать с полученным значением).
+         */
         (howToAccumulateFinalValues: (acc: R[], item: R) => R[]) => {
-            // т.к. последней мы получаем функцию, которая получает уже преобразованные данные, эта функция
-            // должна получать в себя результат последнего преобразования, а значит, именно последний шаг
-            // должен получать аккумулирующую функцию, а уже все прошлые фукнции должны ссылаться на свою следующую,
-            // КАК НА СЛЕДУЮЩИЙ ШАГ
-
-            // final acc fn <- previous step <- previous step <- ... <- transducer
-            return steps.reduceRight((y, prevStep) => {
-                // Самый последний шаг получает функцию-инструкцию, как аккумулировать значения
-                // Шаги, идущие перед ним, оборачивают эту функцию
-                const stepReducer = prevStep(y);
-                return stepReducer;
+            /**
+             * т.к. последней мы получаем функцию, которая получает уже преобразованные данные, эта функция
+             * должна получать в себя результат последнего преобразования, а значит, именно последний шаг
+             * должен получать аккумулирующую функцию, а уже все прошлые фукнции должны ссылаться на свою следующую,
+             * КАК НА СЛЕДУЮЩИЙ ШАГ
+             * 
+             * final acc fn <- previous step <- previous step <- ... <- transducer
+             * 
+             * Т.е. по своей структуре получаем композицию
+             * pipe(f, g, k) это f(g(k(x)))
+             */
+            return steps.reduceRight((previouslyTransformedResult, currentFunction) => {
+                return currentFunction(previouslyTransformedResult);
             }, howToAccumulateFinalValues);
         };
 

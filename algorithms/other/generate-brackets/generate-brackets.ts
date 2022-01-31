@@ -1,27 +1,48 @@
-export const generateBrackets = (pairsCount: number): string => {
+export const generateBrackets = (num: number): string => {
+    const symbolsCount = 2 * num;
     const result: string[] = [];
 
-    const inner = (leftBracketsCount: number, rightBracketsCount: number): string => {
-        if (!leftBracketsCount && !rightBracketsCount) {
-            return '';
+    const inner = (
+        openedCount: number,
+        closedCount: number,
+        currentSymbolsCount: number,
+        prefix: string = ''
+    ): void => {
+        // Базовый случай, когда все символы использованы
+        if (currentSymbolsCount === symbolsCount) {
+            result.push(prefix);
         }
 
-        if (leftBracketsCount >= 1) {
-            return `(${inner(leftBracketsCount - 1, rightBracketsCount)}`;
+        // Для "открывающихся" скобок корректно выражение
+        // "вставляй, пока вставляется" - до тех пор, пока их количество меньше
+        // исходного, можно вставлять. Как только оно равно исходному, больше
+        // открывающиеся скобки вставлять нельзя
+        if (openedCount < num) {
+            const updatedPrefix = `${prefix}(`;
+            inner(
+                openedCount + 1,
+                closedCount,
+                currentSymbolsCount + 1,
+                updatedPrefix
+            );
         }
 
-        if (!leftBracketsCount && rightBracketsCount >= 1) {
-            return `${inner(leftBracketsCount, rightBracketsCount - 1)})`;
+        // Для закрывающихся скобок, однако, корректно иное выражение - 
+        // пока открытых скобок больше, чем закрытых, мы должны вставлять
+        // закрывающиеся скобки, НЕ ЗАБЫВАЯ при этом увеличивать количество символов
+        // (ЧТОБЫ ОСТАНОВИТЬСЯ НА БАЗОВОМ СЛУЧАЕ!!!!)
+        if (openedCount > closedCount) {
+            const updatedPrefix = `${prefix})`;
+            inner(
+                openedCount,
+                closedCount + 1,
+                currentSymbolsCount + 1,
+                updatedPrefix
+            );
         }
-
-        return 'foo';
     };
 
-    for (let i = 0; i <= pairsCount; i += 1) {
-        const size = pairsCount - i + (result.length - 1);
-        const w = inner(size, size);
-        result.push(w);
-    }
+    inner(0, 0, 0);
 
     return result.join(',');
 }

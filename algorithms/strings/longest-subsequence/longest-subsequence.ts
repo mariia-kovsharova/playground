@@ -9,15 +9,13 @@
  * 
  */
 
-import assert from 'assert';
-
 /**
  * 
  * @param firstWord - первое слово в сравнении
  * @param secondWord - второе слово в сравнении
  * @returns number - максимальное количество совпадений букв на одинаковых позициях у 2 слов
  */
-const findLongestSequance = (firstWord: string, secondWord: string): number => {
+export const findLongestSubsequance = (firstWord: string, secondWord: string): number => {
     // таблица, в которой каждая строка служит определением, сколько общих букв с 1 словом
     // имеет второе слово ПОБУКВЕННО
     const n = firstWord.length;
@@ -76,20 +74,3 @@ const findLongestSequance = (firstWord: string, secondWord: string): number => {
     }
     return table[n][m];
 };
-
-
-const result1 = findLongestSequance('fish', 'fosh');
-const result2 = findLongestSequance('fish', 'vista');
-const result3 = findLongestSequance('forest', 'clue');
-const result4 = findLongestSequance('test', 'tishes');
-const result5 = findLongestSequance('test', 'bullet');
-
-assert(result1 === 3);
-assert(result2 === 2);
-assert(result3 === 1);
-assert(result4 === 3);
-assert(result5 === 2);
-
-console.log('done');
-
-export { };

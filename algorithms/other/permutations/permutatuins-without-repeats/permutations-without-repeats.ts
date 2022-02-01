@@ -1,4 +1,4 @@
-export const generatePermutations = (numeralSystem: number, symbolsCount?: number) => {
+export const generatePermutationsWithoutRepeats = (numeralSystem: number, symbolsCount?: number) => {
     const result: string[] = [];
     const maxSize = symbolsCount ?? numeralSystem;
 

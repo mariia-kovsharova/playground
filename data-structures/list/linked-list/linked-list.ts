@@ -248,11 +248,10 @@ class LinkedList<T = any> {
         let currentNode: Node<T> | null = this.head;
 
         let prevNode: Node<T> | null = null;
-        let nextNode: Node<T> | null = null;
 
         while (currentNode) {
             // Следующая нода, которую мы будем рассматривать - нода next от текущей
-            nextNode = currentNode.next;
+            const tmp = currentNode.next;
 
             // Текущий узел должен теперь указывать на предыдущий
             currentNode.next = prevNode;
@@ -261,7 +260,7 @@ class LinkedList<T = any> {
             prevNode = currentNode;
 
             // Смотрим на бывший "следующий"
-            currentNode = nextNode;
+            currentNode = tmp;
         }
 
         [this.head, this.tail] = [this.tail, this.head];

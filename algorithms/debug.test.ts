@@ -312,3 +312,38 @@ function getIntersectionNode(headA: any | null, headB: any | null): any | null {
 
     return a;
 }
+
+/**
+ * Definition for singly-linked list.
+ * class ListNode {
+ *     val: number
+ *     next: ListNode | null
+ *     constructor(val?: number, next?: ListNode | null) {
+ *         this.val = (val===undefined ? 0 : val)
+ *         this.next = (next===undefined ? null : next)
+ *     }
+ * }
+ */
+
+// ListNode instead of any
+function removeNthFromEnd(head: any | null, n: number): any | null {
+    let curr = head;
+    let prev = head;
+
+    for (let i = 0; i < n; i += 1) {
+        curr = curr.next;
+    }
+
+    if (!curr) {
+        return head.next;
+    }
+
+    while (curr.next) {
+        curr = curr.next;
+        prev = prev.next;
+    }
+
+    prev.next = prev.next.next;
+
+    return head;
+}

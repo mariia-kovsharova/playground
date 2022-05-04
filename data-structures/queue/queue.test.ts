@@ -9,20 +9,24 @@ describe('Queue', () => {
 
     test('enqueue', () => {
         expect(queue.size).toBe(0);
+        expect(queue.isEmpty()).toBeTruthy();
 
         queue.enqueue(1);
         queue.enqueue(2);
 
         expect(queue.size).toBe(2);
+        expect(queue.isEmpty()).toBeFalsy();
     });
 
     test('denqueue', () => {
         expect(queue.size).toBe(0);
+        expect(queue.isEmpty()).toBeTruthy();
 
         queue.enqueue(1);
         queue.enqueue(2);
 
         expect(queue.size).toBe(2);
+        expect(queue.isEmpty()).toBeFalsy();
 
         const first = queue.dequeue();
 
@@ -33,6 +37,7 @@ describe('Queue', () => {
 
         expect(second).toBe(2);
         expect(queue.size).toBe(0);
+        expect(queue.isEmpty()).toBeTruthy();
 
         const third = queue.dequeue();
 

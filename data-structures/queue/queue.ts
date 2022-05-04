@@ -20,6 +20,10 @@ class Queue<T> {
         return this.queue.size;
     }
 
+    public isEmpty(): boolean {
+        return this.queue.size === 0;
+    }
+
     public enqueue(value: T): void {
         if (this.maxSize && this.queue.size >= this.maxSize) {
             return;

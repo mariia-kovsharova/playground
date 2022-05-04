@@ -18,10 +18,10 @@ class BinaryTree<T> implements IBinaryTree<T> {
     public left: IBinaryTree<T> | null;
     public right: IBinaryTree<T> | null;
 
-    constructor(value?: T) {
-        this.value = value ?? null;
-        this.left = null;
-        this.right = null;
+    constructor(value: T | null = null, left: BinaryTree<T> | null = null, right: BinaryTree<T> | null = null) {
+        this.value = value;
+        this.left = left;
+        this.right = right;
     }
 
     public add(value: T) {
@@ -50,19 +50,21 @@ class BinaryTree<T> implements IBinaryTree<T> {
             return [];
         }
 
-        const result: T[] = [];
+        return [...(this.left?.traversal() || []), this.value, ...(this.right?.traversal() || [])];
 
-        if (this.left) {
-            result.push(...this.left.traversal());
-        }
+        // const result: T[] = [];
 
-        result.push(this.value);
+        // if (this.left) {
+        //     result.push(...this.left.traversal());
+        // }
 
-        if (this.right) {
-            result.push(...this.right.traversal());
-        }
+        // result.push(this.value);
 
-        return result;
+        // if (this.right) {
+        //     result.push(...this.right.traversal());
+        // }
+
+        // return result;
     }
 
     height(): number {

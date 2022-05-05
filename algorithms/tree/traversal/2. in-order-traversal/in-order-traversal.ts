@@ -20,7 +20,6 @@ export const inOrderTraversalIterative = <T>(tree: BinaryTree<T> | null): (T | n
     }
 
     const stack = new Stack<BinaryTree<T>>();
-    stack.push(tree);
 
     let current: BinaryTree<T> | null = tree;
 

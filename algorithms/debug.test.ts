@@ -115,6 +115,42 @@ const removeDuplicates = function (nums) {
     return size;
 };
 
+/*
+1. Create a copy of the input array. copy = [8,1,2,2,3]
+2. Sort the copy array. copy = [1,2,2,3,8]
+3. Fill the map: number => count (where count is an index in sorted array,
+   so first number with index 0 has 0 numbers less than it,
+   index 1 has 1 number less, etc). We update only first time we enocunter
+   the number so that way we skip duplicates.
+map[1]=>0
+map[2]=>1
+map[3]=>3
+map[8]=>4
+4. We re-use our copy array to get our result, we iterate over original array,
+   and get counts from the map.
+[4,0,1,1,3]
+*/
+function smallerNumbersThanCurrent(nums: number[]): number[] {
+    const copy = nums.slice();
+    copy.sort((a, b) => a - b);
+
+    const map = new Map();
+
+    for (let i = 0; i < nums.length; i += 1) {
+        if (map.has(copy[i])) {
+            continue;
+        }
+
+        map.set(copy[i], i);
+    }
+
+    for (let i = 0; i < nums.length; i += 1) {
+        copy[i] = map.get(nums[i]);
+    }
+
+    return copy;
+}
+
 const validMountainArray = function (arr) {
     if (arr.length < 3) {
         return false;

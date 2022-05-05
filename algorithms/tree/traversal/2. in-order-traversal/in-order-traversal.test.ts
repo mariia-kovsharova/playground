@@ -1,7 +1,7 @@
 import { BinaryTree } from '../../../../data-structures/tree/binary-tree/binary-tree';
-import { preOrderTraversal, preOrderTraversalIterative } from './pre-order-traversal';
+import { inOrderTraversal, inOrderTraversalIterative } from './in-order-traversal';
 
-describe('Pre-order traversal', () => {
+describe('In-order traversal', () => {
 
     describe('Non-empty tree', () => {
         let tree: BinaryTree<number>;
@@ -27,13 +27,13 @@ describe('Pre-order traversal', () => {
         });
 
         test('Recoursive traversal', () => {
-            const result = [1, 2, 4, 7, 5, 3, 6];
-            expect(preOrderTraversal(tree)).toEqual(result);
+            const result = [4, 7, 2, 5, 1, 3, 6];
+            expect(inOrderTraversal(tree)).toEqual(result);
         });
 
         test('Iterative traversal', () => {
-            const result = [1, 2, 4, 7, 5, 3, 6];
-            expect(preOrderTraversalIterative(tree)).toEqual(result);
+            const result = [4, 7, 2, 5, 1, 3, 6];
+            expect(inOrderTraversalIterative(tree)).toEqual(result);
         });
     });
 
@@ -66,13 +66,13 @@ describe('Pre-order traversal', () => {
         });
 
         test('Recoursive traversal', () => {
-            const result = [8, 7, 6, 5, 4, 3, 2, 1];
-            expect(preOrderTraversal(tree)).toEqual(result);
+            const result = [1, 2, 3, 4, 5, 6, 7, 8];
+            expect(inOrderTraversal(tree)).toEqual(result);
         });
 
         test('Iterative traversal', () => {
-            const result = [8, 7, 6, 5, 4, 3, 2, 1];
-            expect(preOrderTraversalIterative(tree)).toEqual(result);
+            const result = [1, 2, 3, 4, 5, 6, 7, 8];
+            expect(inOrderTraversalIterative(tree)).toEqual(result);
         });
     });
 
@@ -113,12 +113,12 @@ describe('Pre-order traversal', () => {
 
         test('Recoursive traversal', () => {
             const result = [8, 7, 6, 5, 4, 3, 2, 1];
-            expect(preOrderTraversal(tree)).toEqual(result);
+            expect(inOrderTraversal(tree)).toEqual(result);
         });
 
         test('Iterative traversal', () => {
             const result = [8, 7, 6, 5, 4, 3, 2, 1];
-            expect(preOrderTraversalIterative(tree)).toEqual(result);
+            expect(inOrderTraversalIterative(tree)).toEqual(result);
         });
     });
 
@@ -131,12 +131,12 @@ describe('Pre-order traversal', () => {
 
         test('Recoursive traversal', () => {
             const result = [];
-            expect(preOrderTraversal(tree)).toEqual(result);
+            expect(inOrderTraversal(tree)).toEqual(result);
         });
 
         test('Iterative traversal', () => {
             const result = [];
-            expect(preOrderTraversalIterative(tree)).toEqual(result);
+            expect(inOrderTraversalIterative(tree)).toEqual(result);
         });
     });
 });

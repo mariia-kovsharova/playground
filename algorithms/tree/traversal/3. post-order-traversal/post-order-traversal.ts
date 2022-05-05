@@ -17,13 +17,12 @@ export const postorderTraversalIterative = <T>(tree: BinaryTree<T> | null): (T |
     }
 
     const stack = new Stack<BinaryTree<T>>();
-    // root element has to be the last element in stack (to process last)
-    stack.push(tree);
 
+    // root element has to be the last element in stack (to process last)
     let current: BinaryTree<T> | null = tree;
     let lastVisited: BinaryTree<T> | null = null;
 
-    while (!stack.isEmpty()) {
+    while (!stack.isEmpty() || current !== null) {
         if (current !== null) {
             stack.push(current);
             current = current.left;
@@ -32,13 +31,12 @@ export const postorderTraversalIterative = <T>(tree: BinaryTree<T> | null): (T |
         }
 
         const element = stack.peek();
-
+        // if right child exists and we came from left
         if (element.right && lastVisited !== element.right) {
             current = element.right;
         } else {
+            result.push(element.value);
             lastVisited = stack.pop();
-            lastVisited.right = null;
-            result.push(lastVisited.value);
         }
     }
 

@@ -1,27 +1,54 @@
-const sq = (nums: number[]) => {
-    let left = 0;
-    let right = nums.length - 1;
-
+function sortedSquares(nums: number[]): number[] {
     const result: number[] = [];
 
-    while (right - left >= 0) {
-        if (Math.abs(nums[left]) > Math.abs(nums[right])) {
-            result.push(nums[left] ** 2);
-            left += 1;
-            continue;
-        }
+    let start = 0;
+    let end = nums.length - 1;
 
-        if (right !== left && Math.abs(nums[left]) === Math.abs(nums[right])) {
-            const v = nums[right] ** 2;
-            result.push(v);
-            result.push(v);
-            left += 1;
-            right -= 1;
-            continue;
-        }
+    while (start <= end) {
+        // if (negative) start num is more than end num, we should add start num firstly
+        // (it will be at the end of array after reverse)
+        // if (Math.abs(nums[start]) > Math.abs(nums[end])) {
+        //     const element = nums[start] ** 2;
+        //     result.push(element);
 
-        result.push(nums[right] ** 2);
-        right -= 1;
+        //     start += 1;
+        //     continue;
+        // }
+        // if they are equal (but not the same), we should add element twice
+        // if (start !== end && (Math.abs(nums[start]) === Math.abs(nums[end]))) {
+        //     const element = nums[start] ** 2;
+        //     result.push(element);
+        //     result.push(element);
+
+        //     start += 1;
+        //     end -= 1;
+        //     continue;
+        // }
+        // if last num more than start num, we should add end num firstly
+        // (it will be at the end of array after reverse)
+        // if (Math.abs(nums[start]) < Math.abs(nums[end])) {
+        //     const element = nums[end] ** 2;
+        //     result.push(element);
+
+        //     end -= 1;
+        //     continue;
+        // }
+
+        // otherwise start and end pointers points on the same element
+        // so this is the last and smallest element
+        // result.push(nums[start] ** 2);
+        // start += 1;
+
+        const leftSquare = nums[start] ** 2;
+        const rightSquare = nums[end] ** 2;
+
+        if (leftSquare > rightSquare) {
+            result.push(leftSquare);
+            start += 1;
+        } else {
+            result.push(rightSquare);
+            end -= 1;
+        }
     }
 
     return result.reverse();
@@ -257,12 +284,62 @@ const findDisappearedNumbers = function (nums) {
     return result;
 };
 
+function lengthOfLongestSubstring(s: string): number {
+    const map = new Map<string, number>();
+
+    let current = 0;
+    let max = 0;
+
+    let pointer = 0;
+    let start = 0;
+
+    while (pointer <= s.length - 1) {
+        const currentSymbol = s[pointer];
+        if (!map.has(currentSymbol)) {
+            current += 1;
+            max = Math.max(current, max);
+
+            map.set(currentSymbol, 1);
+
+            pointer += 1;
+        } else {
+            current = 0;
+
+            start += 1;
+            pointer = start;
+
+            map.clear();
+        }
+    }
+
+    return max;
+}
+
 test('1', () => {
     const nums = [2, 2, 3, 1];
     const r = thirdMax(nums);
     expect(r).toBe(1);
 })
 
+function rotate(nums: number[], k: number): void {
+    const start = 0;
+    const end = nums.length - 1;
+    const count = k % nums.length;
+
+    const reverse = (i: number, j: number) => {
+        while (i < j) {
+            const temp = nums[i];
+            nums[i] = nums[j];
+            nums[j] = temp;
+            i += 1;
+            j -= 1;
+        }
+    }
+
+    reverse(start, end);
+    reverse(start, count - 1);
+    reverse(count, end);
+}
 /**
  * Definition for singly-linked list.
  * class ListNode {

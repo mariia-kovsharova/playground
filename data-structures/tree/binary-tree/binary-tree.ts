@@ -3,6 +3,8 @@ interface IBinaryTree<T> {
     left: IBinaryTree<T> | null;
     right: IBinaryTree<T> | null;
 
+    next: IBinaryTree<T> | null;
+
     height: () => number;
     leftHeight: () => number;
     rightHeight: () => number;
@@ -18,10 +20,14 @@ class BinaryTree<T> implements IBinaryTree<T> {
     public left: IBinaryTree<T> | null;
     public right: IBinaryTree<T> | null;
 
+    next: IBinaryTree<T> | null;
+
     constructor(value: T | null = null, left: BinaryTree<T> | null = null, right: BinaryTree<T> | null = null) {
         this.value = value;
         this.left = left;
         this.right = right;
+
+        this.next = null;
     }
 
     public add(value: T) {

@@ -1,3 +1,5 @@
+import { BinaryTree } from '../data-structures/tree/binary-tree/binary-tree';
+
 function sortedSquares(nums: number[]): number[] {
     const result: number[] = [];
 
@@ -315,11 +317,59 @@ function lengthOfLongestSubstring(s: string): number {
     return max;
 }
 
-test('1', () => {
-    const nums = [2, 2, 3, 1];
-    const r = thirdMax(nums);
-    expect(r).toBe(1);
-})
+function checkInclusion(s1: string, s2: string): boolean {
+    if (s1.length > s2.length) {
+        return false;
+    }
+
+    const size = s1.length - 1;
+
+    const symbols = new Map();
+
+    for (const s of s1) {
+        symbols.set(s, (symbols.get(s) ?? 0) + 1);
+    }
+
+    let start = 0;
+    let end = start + size;
+
+    const curr = new Map();
+
+    for (let i = start; i <= end; i += 1) {
+        const s = s2[i];
+        curr.set(s, (curr.get(s) ?? 0) + 1);
+    }
+
+    while (end <= s2.length) {
+        let allSymbols = true;
+
+        symbols.forEach((value, key) => {
+            allSymbols = allSymbols && (curr.get(key) === value);
+        });
+
+        if (allSymbols) {
+            return true;
+        } else {
+            const startSymbol = s2[start];
+            curr.set(startSymbol, curr.get(startSymbol) - 1);
+
+            const nextSymbol = s2[end + 1];
+            curr.set(nextSymbol, (curr.get(nextSymbol) ?? 0) + 1);
+
+            start += 1;
+            end += 1;
+        }
+    }
+
+    return false;
+
+}
+
+// test('1', () => {
+//     const nums = [2, 2, 3, 1];
+//     const r = thirdMax(nums);
+//     expect(r).toBe(1);
+// })
 
 function rotate(nums: number[], k: number): void {
     const start = 0;
@@ -460,3 +510,45 @@ function removeNthFromEnd(head: any | null, n: number): any | null {
 
     return head;
 }
+
+function connect(root: BinaryTree<number> | null): BinaryTree<number> | null {
+    // console.log('current: ', root ? root.value : 'null');
+
+    if (root === null) {
+        return null;
+    }
+
+    if (root.left === null && root.right === null) {
+        // console.log('***');
+        return root;
+    }
+
+    const currentRightPointer = connect(root.right);
+
+    root.left!.next = currentRightPointer;
+    // root.left!.next = root.right;
+
+    // console.log('cuurent: ', root.value);
+    // console.log('current left (', root.left!.value, ') next: ', root.left.next ?? 'null');
+    // console.log('current right (', root.right!.value, ') next: ', root.right.next ?? 'null');
+
+    // connect(root.left);
+
+    return connect(root.left);
+}
+
+const t = new BinaryTree(
+    1,
+    new BinaryTree(
+        2,
+        new BinaryTree(4),
+        new BinaryTree(5)
+    ),
+    new BinaryTree(
+        3,
+        new BinaryTree(6),
+        new BinaryTree(7)
+    )
+)
+
+// connect(t);

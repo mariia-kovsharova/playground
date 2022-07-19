@@ -1,3 +1,5 @@
+import { LinkedList, Node } from '../data-structures/list/linked-list/linked-list';
+import { Stack } from '../data-structures/stack/stack';
 import { BinaryTree } from '../data-structures/tree/binary-tree/binary-tree';
 
 function sortedSquares(nums: number[]): number[] {
@@ -537,18 +539,78 @@ function connect(root: BinaryTree<number> | null): BinaryTree<number> | null {
     return connect(root.left);
 }
 
-const t = new BinaryTree(
-    1,
-    new BinaryTree(
-        2,
-        new BinaryTree(4),
-        new BinaryTree(5)
-    ),
-    new BinaryTree(
-        3,
-        new BinaryTree(6),
-        new BinaryTree(7)
-    )
-)
+function isSubPath(head: Node<number> | null, root: BinaryTree<number> | null): boolean {
+    if (!head) {
+        return true;
+    }
 
-// connect(t);
+    if (!root) {
+        return false;
+    }
+
+    const dfs = (list: Node<number> | null, tree: BinaryTree<number> | null): boolean => {
+        if (!list) {
+            return true;
+        }
+
+        if (!tree) {
+            return false;
+        }
+
+        if (tree.value === list.value) {
+            return dfs(list.next, tree.left) || dfs(list.next, tree.right);
+        } else {
+            return false;
+        }
+    }
+
+    return dfs(head, root) || isSubPath(head, root.left) || isSubPath(head, root.right);
+}
+
+/**
+ * Definition for singly-linked list.
+ * class ListNode {
+ *     val: number
+ *     next: ListNode | null
+ *     constructor(val?: number, next?: ListNode | null) {
+ *         this.val = (val===undefined ? 0 : val)
+ *         this.next = (next===undefined ? null : next)
+ *     }
+ * }
+ */
+
+/**
+ Do not return anything, modify head in-place instead.
+ */
+function reorderList<T>(head: LinkedList<T> | null): void {
+    if (!head) {
+        return;
+    }
+
+    const stack = new Stack<Node<T>>();
+    let list = head.next;
+
+    while (list) {
+        stack.push(list);
+        list = list.next;
+    }
+
+    list = head.head;
+
+    while (list!.next && stack.size && (stack.peek() !== list)) {
+        const temp = list!.next;
+
+        list!.next = stack.pop();
+        list!.next.next = temp;
+
+        list = list!.next.next;
+    }
+
+    list!.next = null;
+}
+
+const list = new LinkedList([1, 2, 3, 4, 5]);
+
+reorderList(list)
+
+console.log(list.toString());

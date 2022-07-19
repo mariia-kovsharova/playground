@@ -15,13 +15,13 @@ class Node<T = any> {
 class LinkedList<T = any> {
     private static readonly Separator = ',';
 
-    private head: Node<T> | null;
-    private tail: Node<T> | null;
+    private _head: Node<T> | null;
+    private _tail: Node<T> | null;
     private _size: number;
 
     constructor(items?: Iterable<T>) {
-        this.head = null;
-        this.tail = null;
+        this._head = null;
+        this._tail = null;
         this._size = 0;
 
         this.fromArray(items);
@@ -38,18 +38,18 @@ class LinkedList<T = any> {
     public prepend(value: T): LinkedList<T> {
         const node = new Node(value);
 
-        if (!this.head || !this.tail) {
-            this.head = node;
-            this.tail = node;
+        if (!this._head || !this._tail) {
+            this._head = node;
+            this._tail = node;
             this._size += 1;
 
             return this;
         }
 
-        const currentHead = this.head;
+        const currentHead = this._head;
         node.next = currentHead;
 
-        this.head = node;
+        this._head = node;
         this._size += 1;
 
         return this;
@@ -64,9 +64,9 @@ class LinkedList<T = any> {
     public append(value: T, index?: number): LinkedList<T> {
         const node = new Node(value);
 
-        if (!this.head || !this.tail) {
-            this.head = node;
-            this.tail = node;
+        if (!this._head || !this._tail) {
+            this._head = node;
+            this._tail = node;
             this._size += 1;
 
             return this;
@@ -75,13 +75,13 @@ class LinkedList<T = any> {
         if (index === 0) {
             this.prepend(value);
         } else if (!index || index >= this.size || index < 0) {
-            const currentTail = this.tail;
+            const currentTail = this._tail;
             currentTail.next = node;
 
-            this.tail = node;
+            this._tail = node;
             this._size += 1;
         } else {
-            let nodeAtIndex: Node<T> = this.head;
+            let nodeAtIndex: Node<T> = this._head;
 
             for (let innerIndex = 0; innerIndex < index - 1; innerIndex += 1) {
                 nodeAtIndex = nodeAtIndex.next as NonNullable<Node<T>>;
@@ -101,11 +101,11 @@ class LinkedList<T = any> {
      * @param value значение, узлы с которым необходимо удалить
      */
     public delete(value: T): void {
-        if (!this.head || !this.tail) {
+        if (!this._head || !this._tail) {
             return;
         }
 
-        let currentNode: Node<T> | null = this.head;
+        let currentNode: Node<T> | null = this._head;
         let prevNode: Node<T> | null = null;
         let nextNode: Node<T> | null = null;
 
@@ -113,18 +113,18 @@ class LinkedList<T = any> {
             if (currentNode.value === value) {
                 this._size -= 1;
 
-                if (currentNode === this.head && currentNode === this.tail) {
-                    this.head = this.tail = null;
+                if (currentNode === this._head && currentNode === this._tail) {
+                    this._head = this._tail = null;
                 }
 
                 nextNode = currentNode.next;
 
-                if (currentNode === this.head) {
-                    this.head = nextNode;
+                if (currentNode === this._head) {
+                    this._head = nextNode;
                 }
 
-                if (currentNode === this.tail) {
-                    this.tail = prevNode;
+                if (currentNode === this._tail) {
+                    this._tail = prevNode;
                 }
 
                 if (prevNode) {
@@ -146,19 +146,19 @@ class LinkedList<T = any> {
      * @returns значение удаленного узла или null, если такого узла нет
      */
     public deleteHead(): T | null {
-        if (!this.head) {
+        if (!this._head) {
             return null;
         }
 
-        const value = this.head.value;
+        const value = this._head.value;
 
-        if (this.head === this.tail) {
-            this.head = this.tail = null;
+        if (this._head === this._tail) {
+            this._head = this._tail = null;
             this._size = 0;
             return value;
         }
 
-        this.head = this.head.next;
+        this._head = this._head.next;
         this._size -= 1;
 
         return value;
@@ -169,25 +169,25 @@ class LinkedList<T = any> {
      * @returns значение удаленного узла или null, если такого узла нет
      */
     public deleteTail(): T | null {
-        if (!this.head || !this.tail) {
+        if (!this._head || !this._tail) {
             return null;
         }
 
-        const value = this.tail.value;
+        const value = this._tail.value;
 
-        if (this.head === this.tail) {
-            this.head = this.tail = null;
+        if (this._head === this._tail) {
+            this._head = this._tail = null;
             this._size = 0;
             return value;
         }
 
-        let beforeNode: Node<T> = this.head;
+        let beforeNode: Node<T> = this._head;
 
-        while (beforeNode.next && beforeNode.next !== this.tail) {
+        while (beforeNode.next && beforeNode.next !== this._tail) {
             beforeNode = beforeNode.next;
         }
 
-        this.tail = beforeNode;
+        this._tail = beforeNode;
         this._size -= 1;
 
         return value;
@@ -199,7 +199,7 @@ class LinkedList<T = any> {
      */
     public toArray(): ReadonlyArray<T> {
         const result: Array<T> = [];
-        let currentNode: Node<T> | null = this.head;
+        let currentNode: Node<T> | null = this._head;
 
         while (currentNode) {
             result.push(currentNode.value);
@@ -241,11 +241,11 @@ class LinkedList<T = any> {
      * 
      */
     public reverse(): void {
-        if (!this.head || !this.tail || this.head === this.tail) {
+        if (!this._head || !this._tail || this._head === this._tail) {
             return;
         }
 
-        let currentNode: Node<T> | null = this.head;
+        let currentNode: Node<T> | null = this._head;
 
         let prevNode: Node<T> | null = null;
 
@@ -263,31 +263,43 @@ class LinkedList<T = any> {
             currentNode = tmp;
         }
 
-        [this.head, this.tail] = [this.tail, this.head];
+        [this._head, this._tail] = [this._tail, this._head];
     }
 
     /**
      * Удаляет элементы из связанного списка
      */
     public clear(): void {
-        if (!this.head || !this.tail) {
+        if (!this._head || !this._tail) {
             return;
         }
 
-        this.head = this.tail = null;
+        this._head = this._tail = null;
         this._size = 0;
     }
 
     public getHead(): T | null {
-        return this.head?.value ?? null;
+        return this._head?.value ?? null;
     }
 
     public getTail(): T | null {
-        return this.tail?.value ?? null;
+        return this._tail?.value ?? null;
+    }
+
+    public get head(): Node<T> | null {
+        return this._head;
+    }
+
+    public get next(): Node<T> | null {
+        if (this._head) {
+            return this._head.next;
+        }
+
+        return null;
     }
 
     public *[Symbol.iterator]() {
-        let node: Node<T> | null = this.head;
+        let node: Node<T> | null = this._head;
         while (node) {
             yield node.value;
             node = node.next;
@@ -295,14 +307,15 @@ class LinkedList<T = any> {
     }
 
     private validate(): void | never {
-        if (this.head && !this.tail) {
+        if (this._head && !this._tail) {
             throw new Error('Linked list can not have only head!');
         }
 
-        if (!this.head && this.tail) {
+        if (!this._head && this._tail) {
             throw new Error('Linked list can not have only tail!');
         }
     }
 }
 
-export { LinkedList };
+export { LinkedList, Node };
+

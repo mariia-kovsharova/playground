@@ -1,9 +1,12 @@
 /**
  * O(n * log(n))
- * @param array массив элементов для сортировки
+ * @param array the collection of items to sort
  */
 const quickSort = <T>(array: Array<T>): Array<T> => {
-    // базовый случай - когда массив имеет длину 0 или 1, он отсортирован
+    /* 
+        base case - when the array has a length equal or less than 1,
+        that means that it is has already been sorted 
+    */
     if (array.length <= 1) {
         return array;
     }
@@ -11,11 +14,12 @@ const quickSort = <T>(array: Array<T>): Array<T> => {
     const middleIndex = Math.floor(array.length / 2);
     const middleElement = array[middleIndex];
 
-    const less = array.filter((i: T) => i < middleElement);
-    const middle = array.filter((i: T) => i === middleElement);
-    const greather = array.filter((i: T) => i > middleElement);
+    const less = array.filter((i: T): boolean => i < middleElement);
+    const middle = array.filter((i: T): boolean => i === middleElement);
+    const greather = array.filter((i: T): boolean => i > middleElement);
 
     return [...quickSort(less), ...middle, ...quickSort(greather)];
 };
 
 export { quickSort };
+

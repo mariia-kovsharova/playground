@@ -15,7 +15,7 @@ interface IBinaryTree<T> {
     isBalanced: () => boolean;
 }
 
-class BinaryTree<T> implements IBinaryTree<T> {
+class BinaryTree<T = number> implements IBinaryTree<T> {
     public value: T | null;
     public left: IBinaryTree<T> | null;
     public right: IBinaryTree<T> | null;

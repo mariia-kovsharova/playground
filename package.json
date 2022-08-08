@@ -8,7 +8,7 @@
     "test-leaks": "jest --detectOpenHandles",
     "tsc": "tsc"
   },
-  "author": "",
+  "author": "Maria Kovsharova",
   "license": "ISC",
   "dependencies": {
     "@babel/cli": "^7.15.7",

@@ -1,16 +1,10 @@
 export class Trie {
-    private symbol: string | null;
     private isEndOfWord: boolean;
     private children: Map<string, Trie>;
 
-    constructor(symbol: string | null = null) {
-        this.symbol = symbol;
+    constructor() {
         this.isEndOfWord = false;
         this.children = new Map();
-    }
-
-    get value(): string | null {
-        return this.symbol;
     }
 
     insert(word: string): void {
@@ -25,7 +19,7 @@ export class Trie {
         if (child) {
             child.insert(word.slice(1));
         } else {
-            const newChild = new Trie(char);
+            const newChild = new Trie();
             newChild.insert(word.slice(1));
 
             this.children.set(char, newChild)

@@ -52,6 +52,11 @@ class Stack<T = any> {
     public print(): string {
         return this.stack.toString();
     }
+
+    public first(): T | null {
+        return this.stack.getHead();
+    }
 }
 
-export { Stack }
+export { Stack };
+

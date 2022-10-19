@@ -45,7 +45,7 @@ class BinaryTree<T = number> implements IBinaryTree<T> {
     }
 
     public traversal(): T[] | never {
-        if (!this.value) {
+        if (this.value === null) {
             return [];
         }
 
@@ -140,9 +140,9 @@ class BinaryTree<T = number> implements IBinaryTree<T> {
         }
 
         if (root.value > value) {
-            BinaryTree.delete(root.left, value);
+            root.left = BinaryTree.delete(root.left, value);
         } else {
-            BinaryTree.delete(root.right, value);
+            root.right = BinaryTree.delete(root.right, value);
         }
 
         return root;

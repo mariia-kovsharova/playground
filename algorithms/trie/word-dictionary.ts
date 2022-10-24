@@ -26,7 +26,7 @@ export class WordDictionary {
 
     search(word: string): boolean {
         if (this.memo.has(word)) {
-            return this.memo.get(word)!;
+            return true;
         }
 
         const size = word.length;

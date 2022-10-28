@@ -1,4 +1,3 @@
-import assert from 'assert';
 
 class Node<T = any> {
     public value: T;
@@ -16,7 +15,7 @@ class Node<T = any> {
     }
 }
 
-class DoublyLinkedList<T = any> {
+class DoublyLinkedList<T = any> implements Iterable<T> {
     private static readonly Separator = ',';
 
     private head: Node<T> | null;

@@ -12,7 +12,7 @@ class Node<T = any> {
     }
 }
 
-class LinkedList<T = any> {
+class LinkedList<T = any> implements Iterable<T> {
     private static readonly Separator = ',';
 
     private _head: Node<T> | null;

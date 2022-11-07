@@ -8,21 +8,19 @@ export class Set<T = number> implements Iterable<T> {
     }
 
     static union<T>(set: Set<T>, ...sets: Array<Set<T>>): Set<T> {
+        const unitedSet = new Set(set);
+
         for (const innerSet of sets) {
             for (const element of innerSet) {
-                set.add(element);
+                unitedSet.add(element);
             }
         }
 
-        return set;
+        return unitedSet;
     }
 
     static intersection<T>(set: Set<T>, ...sets: Array<Set<T>>): Set<T> {
         const result = new Set<T>();
-
-        if (!sets.length) {
-            return set;
-        }
 
         for (const element of set) {
             const all = sets.every(set => set.has(element));

@@ -10,20 +10,18 @@ export class OrderedSet<T = number> implements Iterable<T> {
     }
 
     static union<T>(set: OrderedSet<T>, ...sets: Array<OrderedSet<T>>): OrderedSet<T> {
+        const unitedSet = new OrderedSet(set);
+
         for (const innerSet of sets) {
             for (const element of innerSet) {
-                set.add(element);
+                unitedSet.add(element);
             }
         }
 
-        return set;
+        return unitedSet;
     }
 
     static intersection<T>(set: OrderedSet<T>, ...sets: Array<OrderedSet<T>>): OrderedSet<T> {
-        if (!sets.length) {
-            return set;
-        }
-
         let result = new OrderedSet(set);
 
         const inner = (set1: OrderedSet<T>, set2: OrderedSet<T>): OrderedSet<T> => {

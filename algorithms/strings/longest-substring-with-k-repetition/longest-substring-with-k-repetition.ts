@@ -1,3 +1,8 @@
+/**
+ *  Given a string s and an integer k, return the length of the longest substring of s
+ *  such that the frequency of each character in this substring is greater than or equal to k.
+ */
+
 export function longestSubstring(s: string, k: number): number {
     const inner = (start: number, end: number): number => {
         if (end - start + 1 < k) {
@@ -23,7 +28,7 @@ export function longestSubstring(s: string, k: number): number {
         }
 
         return end - start + 1;
-    }
+    };
 
     return inner(0, s.length - 1);
 }

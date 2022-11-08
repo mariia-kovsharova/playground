@@ -38,7 +38,6 @@ export class OrderedSet<T = number> implements Iterable<T> {
                     node2 = node2.next;
                 } else if (node1.value < node2.value) {
                     node1 = node1.next;
-                    continue;
                 } else {
                     node2 = node2.next;
                 }

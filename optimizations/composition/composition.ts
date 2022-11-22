@@ -1,5 +1,4 @@
-type UnaryFunction = (a: any) => any;
-type VariadicFunction = (...a: any[]) => any;
+import { UnaryFunction } from '../types';
 
 // infers the type of the last element
 type LastType<T extends any[]> = T extends [...infer _, infer LastElementType]

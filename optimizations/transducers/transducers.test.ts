@@ -1,29 +1,39 @@
-import { filter, map, pipe } from './transducers';
+import { compose, filter, map } from './transducers';
 
 describe('Transducers', () => {
     test('map and filter transducer methods', () => {
+        // initial value is [1, 2, 3, 4, 5];
         const collection = <number[]>Array.from({ length: 5 }, (_item: number, index: number) => index + 1);
 
-        const increment = (x: number) => x + 1;
-        const isEven = (x: number) => x % 2 === 0;
-        const introduce = (x: number) => `i am ${x}`;
+        // Here is the collection of simple functions
+        const increment = (x: number): number => x + 1;
+        const isEven = (x: number): boolean => x % 2 === 0;
+        const introduce = (x: number): string => `i am ${x}`;
 
-        const mapIncrement = map(increment);
-        const filterIsEven = filter(isEven);
-        const mapIntroduce = map(introduce);
+        const trace = (msg: string) => <T>(x: T): T => (console.log(msg, x), x);
 
-        //prettier-ignore
-        const doubleEvenNumbersAndMapToString =
-            pipe(
-                map(increment), // mapIncrement
-                filter(isEven), // filterIsEven
-                map(introduce) // mapIntroduce
+        // Here is the composition of them, or an equivalent of
+        // const result = (value: number) => introduce(isEven(increment(value)))
+        const complexComposedFunction =
+            compose(
+                map(introduce),
+                filter(isEven),
+                map(increment),
             );
 
-        const process = doubleEvenNumbersAndMapToString((acc, item) => acc.concat(item));
+        const whatToDoWithComposedResult = complexComposedFunction(
+            (acc, item) => {
+                console.log(acc);
+                console.log(item);
 
-        const transducedCollection = collection.reduce(process, []);
+                return `${acc}${item};`;
+            }
+        );
 
-        expect(transducedCollection).toEqual([2, 4, 6].map(x => `i am ${x}`));
+        const processed = collection.reduce(whatToDoWithComposedResult, '');
+
+        const expectedResult = [2, 4, 6].map(x => `i am ${x};`).join('');
+
+        expect(processed).toEqual(expectedResult);
     });
 });

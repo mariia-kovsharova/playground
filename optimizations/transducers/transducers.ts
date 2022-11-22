@@ -5,7 +5,7 @@
  * Например, если есть массив из 10 элементов
  */
 
-const collection = <number[]>Array.from({ length: 10 }, (_item: number, index: number) => index + 1);
+const collection = Array.from({ length: 10 }, (_item: number, index: number) => index + 1);
 
 /**
  * Если традиционно выполнять преобразования через map/filter, на каждом этапе будет создаваться
@@ -114,37 +114,38 @@ const transformedCollection = <string[]>collection
  * А map берет редьюсер, но перед тем, как засунуть в него аккумулятор и элемент, преобразовывает элемент 
  */
 
-// map = transformFn => reducing function => reducer
+type TransformFunction<InputType, OutputType> = (item: InputType) => OutputType;
+// map = transformFn => step inside reducer => reducer
 const map =
-    <T, R = T>(transformFn: (i: T) => R) =>
-        (reducingFn: (acc: R[], i: R) => R[]) =>
-            (acc: R[], currentItem: T): R[] => {
-                const transformedValue = transformFn(currentItem);
-                return reducingFn(acc, transformedValue);
+    <Input, Output>(transform: TransformFunction<Input, Output>) =>
+        (step: (acc: Output, i: Output) => Output) =>
+            (accumulator: Output, item: Input): Output => {
+                // Here we transform the input value to the output and pass it into next step
+                const transformedItem = transform(item);
+                return step(accumulator, transformedItem);
             };
 
-// filter = predicate => reducing function => reducer
+
+type PredicateFunction<InputType> = (value: InputType) => boolean;
+// filter = predicate => step inside reducer => reducer
 const filter =
-    <T>(predicateFn: (i: T) => boolean) =>
-        (reducingFn: (acc: T[], i: T) => T[]) =>
-            (acc: T[], currentItem: T): T[] => {
-                // Если текущий итем подходит по предикату, он идет по "трубе" обработчиков дальше
-                const isPassedPredicate = predicateFn(currentItem);
-                if (isPassedPredicate) {
-                    return reducingFn(acc, currentItem);
-                }
-                // Если не подходит, возвращается просто аккумулятор
-                return acc;
+    <Input>(predicate: PredicateFunction<Input>) =>
+        (step: (acc: Input, i: Input) => Input) =>
+            (accumulator: Input, item: Input): Input => {
+                // If the current item passed the predicate function, we can continue its processing
+                // or we do not need to process it, instead we return previously processed accumulator
+
+                return predicate(item) ? step(accumulator, item) : accumulator;
             };
 
-const pipe =
+const compose =
     <T, R = T>(...steps) =>
         /**
-         * pipe принимает сначала набор функций-шагов, которые должно пройти значение,
+         * compose принимает сначала набор функций-шагов, которые должно пройти значение,
          * затем функцию, которая управляет поведением значения, полученного в результате прохода всех обработчиков
          * (т.е. "описывает", как именно дальше работать с полученным значением).
          */
-        (howToAccumulateFinalValues: (acc: R[], item: R) => R[]) => {
+        (outerReducer: (acc: R, item: R) => R) => {
             /**
              * т.к. последней мы получаем функцию, которая получает уже преобразованные данные, эта функция
              * должна получать в себя результат последнего преобразования, а значит, именно последний шаг
@@ -154,11 +155,12 @@ const pipe =
              * final acc fn <- previous step <- previous step <- ... <- transducer
              * 
              * Т.е. по своей структуре получаем композицию
-             * pipe(f, g, k) это f(g(k(x)))
+             * compose(f, g, k) это f(g(k(x)))
              */
             return steps.reduceRight((previouslyTransformedResult, currentFunction) => {
                 return currentFunction(previouslyTransformedResult);
-            }, howToAccumulateFinalValues);
+            }, outerReducer);
         };
 
-export { map, filter, pipe };
+export { map, filter, compose };
+

@@ -9,16 +9,13 @@ const collection = Array.from({ length: 10 }, (_item: number, index: number) => 
 
 /**
  * Если традиционно выполнять преобразования через map/filter, на каждом этапе будет создаваться
- * по сути ненужная коллекция.
- * В случае, если в массиве 10 элементов, это не страшно, а вот если 10 млн элементов, может быть грустно
+ * по сути ненужная коллекция. Для списков большого размера это может сильно снижать производительность.
  */
 
-const transformedCollection = <string[]>collection
-    // после map - новая коллекция
+// Тут создается 3 промежуточных массива
+const transformedCollection = collection
     .map((item: number) => item * 2)
-    // и после filter тоже
     .filter((item: number) => item % 2 === 0)
-    // и снова новая коллекция
     .map((item: number) => `i am ${item}`);
 
 /**
@@ -26,7 +23,7 @@ const transformedCollection = <string[]>collection
  * Технически это составная "сужаемая" функция высшего порядка
  * (transducer is a composable higher order reducer function)
  * 
- * Пример обычного редьюсера (палочка это элемент коллекции)
+ * Пример обычного преобразования через map/filter (палочка это элемент коллекции)
  * [|] > [|] > [|] > [|]
  * 
  * Пример трансдьюсера
@@ -67,9 +64,12 @@ const transformedCollection = <string[]>collection
  * Функцию преобразования можно вынести наружу, получим следующую структуру:
  * tMap = transformFn => (acc, item) => acc.concat(transformFn(item));
  * 
- * [1, 2, 3, 4, 5].reduce(tMap((x) => x + 1), []); // [2, 3, 4];
+ * [1, 2, 3, 4, 5].reduce(tMap((x) => x + 1), []); // [2, 3, 4, 5, 6];
  * 
  * Аналогично с фильтром
+ * tFilterReducer = (acc, item) => item % 2 === 0 ? acc.concat(item) : acc;
+ * 
+ * Вынесем предикат наружу:
  * tFilter = predicateFn => (acc, item) => predicateFn(item) ? acc.concat(item) : acc;
  * 
  * [1, 2, 3, 4, 5].reduce(tFilter((x) => x % 2 === 0), []); // [2, 4];
@@ -85,23 +85,24 @@ const transformedCollection = <string[]>collection
  * tMap = transformFn => (acc, item) => acc.concat(transformFn(item));
  * tFilter = predicateFn => (acc, item) => predicateFn(item) ? acc.concat(item) : acc;
  * 
- * И tMap, и tFilter используют acc.concat в качестве reducing function
+ * Вынесем функцию, которая рассказывает КАК обрабатывать элементы, наружу
  * 
- * Вынесем reducing function наружу
- * 
- * const mapping = transformFn => reducingFn => (acc, item) => reducingFn(acc, transformFn(item));
- * const filtering = predicateFn => reducingFn => (acc, item) => predicateFn(item) ? reducingFn(acc, item) : acc;
+ * const map = transformFn => reducingFn => (acc, item) => reducingFn(acc, transformFn(item));
+ * const filter = predicateFn => reducingFn => (acc, item) => predicateFn(item) ? reducingFn(acc, item) : acc;
  * 
  * Получается процесс такой (на примере map):
- * поступивший элемент преобразовывается и вместе с текущим аккумулятором передается в reducing function как параметры 
+ * 1) Элемент поступает в transformFunction
+ * 2) Обрабатывается этой функцией
+ * 3) В результате в reducingFn в качестве acc передается прошлый аккумулятор, а в качестве item
+ *    наш трансформированный на ш.1 элемент
  * 
  * [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
- *   .reduce(mapping(x => x + 1)((acc, item) => acc.concat(item)), [])
- *   .reduce(filtering(x => x % 2 === 0)((acc, item) => acc.concat(item)), []); // [2, 4, 6, 8, 10]
+ *   .reduce(map(x => x + 1)((acc, item) => acc.concat(item)), [])
+ *   .reduce(filter(x => x % 2 === 0)((acc, item) => acc.concat(item)), []); // [2, 4, 6, 8, 10]
  * 
  * ПРИМЕЧАНИЕ:
  * т.к. array.concat создает каждый раз новый массив, думаю,
- * куда больший смысл будет иметь мутирование аккумулятора (acc.push(item); return acc)
+ * куда больший смысл будет иметь мутирование аккумулятора, пусть это не по канонам ФП
  * 
  * 
  * Далее, чтобы не использовать reduce на каждый шаг, мы сделаем так, чтобы ВНУТРИ одного
@@ -138,29 +139,33 @@ const filter =
                 return predicate(item) ? step(accumulator, item) : accumulator;
             };
 
-const compose =
+const pipe =
     <T, R = T>(...steps) =>
         /**
-         * compose принимает сначала набор функций-шагов, которые должно пройти значение,
+         * pipe принимает сначала набор функций-шагов, которые должно пройти значение,
          * затем функцию, которая управляет поведением значения, полученного в результате прохода всех обработчиков
          * (т.е. "описывает", как именно дальше работать с полученным значением).
          */
         (outerReducer: (acc: R, item: R) => R) => {
+
+            console.log(steps);
+            console.log(outerReducer);
+
             /**
              * т.к. последней мы получаем функцию, которая получает уже преобразованные данные, эта функция
              * должна получать в себя результат последнего преобразования, а значит, именно последний шаг
              * должен получать аккумулирующую функцию, а уже все прошлые фукнции должны ссылаться на свою следующую,
              * КАК НА СЛЕДУЮЩИЙ ШАГ
              * 
-             * final acc fn <- previous step <- previous step <- ... <- transducer
-             * 
              * Т.е. по своей структуре получаем композицию
-             * compose(f, g, k) это f(g(k(x)))
+             * outerReducer(innerReducer1(innerReducer2(innerReducer3((acc, item) => acc))))
+             * 
+             * compose(f,g,k)(value) = f(g(k(value)))
              */
             return steps.reduceRight((previouslyTransformedResult, currentFunction) => {
                 return currentFunction(previouslyTransformedResult);
             }, outerReducer);
         };
 
-export { map, filter, compose };
+export { map, filter, pipe };
 

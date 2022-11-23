@@ -1,47 +1,80 @@
-import { compose, pipe } from './composition';
+import { compose } from './compose';
+import { pipe } from './pipe';
 
 describe('Checking function composition', () => {
-    it('Simple compose', () => {
+    it('Simple compose with the same type fns', () => {
         const fn1 = (value: string): string => `fn1(${value})`;
         const fn2 = (value: string): string => `fn2(${value})`;
         const fn3 = (value: string): string => `fn3(${value})`;
 
-        const value = 'value';
-        expect(compose(fn1, fn2, fn3)(value)).toBe('fn1(fn2(fn3(value)))');
+        const composition = compose(fn1, fn2, fn3);
+
+        const value = 'input';
+        expect(composition(value)).toBe('fn1(fn2(fn3(input)))');
     });
 
-    it('Simple pipe', () => {
+    it('Simple pipe with the same type fns', () => {
         const fn1 = (value: string): string => `fn1(${value})`;
         const fn2 = (value: string): string => `fn2(${value})`;
         const fn3 = (value: string): string => `fn3(${value})`;
 
-        const value = 'value';
-        expect(pipe(fn1, fn2, fn3)(value)).toBe('fn3(fn2(fn1(value)))');
+        const pipeline = pipe(fn1, fn2, fn3);
+
+        const value = 'input';
+        expect(pipeline(value)).toBe('fn3(fn2(fn1(input)))');
+    });
+
+    it('Compose with multiple-types fns', () => {
+        const fn1 = (value: string): number => value.length;
+        const fn2 = (value: number): string => {
+            return [...new Array(value)].map(() => 'foo').join('-');
+        };
+        const fn3 = (value: string): string => `fn3(${value})`;
+
+        const composition = compose(fn3, fn2, fn1);
+
+        const value = 'hey';
+        expect(composition(value)).toBe('fn3(foo-foo-foo)');
+    });
+
+    it('Pipe with multiple-types fns', () => {
+        const fn1 = (value: string): number => value.length;
+        const fn2 = (value: number): string => {
+            return [...new Array(value)].map(() => 'foo').join('-');
+        };
+        const fn3 = (value: string): string => `fn3(${value})`;
+
+        const pipeline = pipe(fn1, fn2, fn3);
+
+        const value = 'hey';
+        expect(pipeline(value)).toBe('fn3(foo-foo-foo)');
     });
 
     it('Compose some string transform functions', () => {
 
-        const trace = (msg: string) => <T>(x: T): T => (console.log(msg, x), x);
+        const trace = <Input>(msg: string) => (value: Input): Input => {
+            console.log(msg, value);
+            return value;
+        };
 
-        const map = (transform: (s: any) => any) =>
-            (values: Array<string>) => values.map(transform);
+        const map = <Input, Output>(transform: (s: Input) => Output) =>
+            (values: Array<Input>) => values.map(transform);
 
-        const filter = (predicate: (s: string) => boolean) =>
-            (values: Array<string>) => values.filter(predicate);
+        const filter = <Input>(predicate: (s: Input) => boolean) =>
+            (values: Array<Input>) => values.filter(predicate);
 
         const toLowerCase = (str: string): string => str.toLowerCase();
-        const onlyLongTitle = (str: string): boolean => str.length > 3;
+        const onlyLongTitle = (str: string[]): boolean => str.length > 3;
         const split = (separator: string) => (value: string) => value.split(separator);
         const join = (separator: string) => (values: Array<string>) => values.join(separator);
 
         // composed = join(onlyLongWords(split(toLowerCase(value))))
         const composed = compose(
+            // TODO: something is wrong with trace fn types
+            trace('after all'),
             map(join('-')),
-            trace('after filter'),
             filter(onlyLongTitle),
-            trace('after split'),
             map(split(' ')),
-            trace('after lowercase'),
             map(toLowerCase)
         );
 
